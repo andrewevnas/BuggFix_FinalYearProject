@@ -1,0 +1,85 @@
+.workspace-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  .icon-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-size: 16px;
+    padding: 6px;
+    cursor: pointer;
+    
+    transition-duration: 0.8s;
+    border-radius: 5px;
+
+    padding: 4px 10px;
+    color: #00b8a2;
+    background-color: #2a3d3a;
+    
+  }
+
+  .content-container {
+    gap: 20px;
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    background-color: #2a3d3a;
+    padding: 4px;
+    
+  }
+
+  .logo {
+    height: 100px;
+    border-radius: 50%;
+    
+  }
+
+  .header-container {
+    display: flex;
+    justify-content: center;
+    background-color: #1e1e1e;
+    padding: 2px 0;
+    
+  }
+
+  .input-output-container {
+    
+    display: flex;
+    flex-direction: column;
+    
+    
+
+        .input-header {
+        background-color: #ededed;
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        
+        }
+        
+        textarea {
+        flex-grow: 1;
+        border: none;
+        resize: none;
+        padding: 10px;
+        font-size: 20px;
+        }
+
+        textarea:focus {
+        outline: none;
+        }
+
+        button {
+        border: none;
+        }
+  }
+
+    .editor-container {
+      
+      grid-row: 1 / 3;
+    }
+}
+
