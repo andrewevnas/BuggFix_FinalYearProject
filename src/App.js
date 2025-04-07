@@ -4,6 +4,7 @@ import { WorkspaceScreen } from "./screens/workspaceScreen";
 import { WorkspaceProvider } from "./providers/workspaceProvider";
 import { ModalProvider } from "./providers/modalProvider";
 
+
 function App() {
   return (
     <WorkspaceProvider>
@@ -12,6 +13,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomeScreen />} />
             <Route path="/workspace/:fileId/:folderId" element={<WorkspaceScreen />} />
+            
           </Routes>
         </BrowserRouter>
       </ModalProvider>

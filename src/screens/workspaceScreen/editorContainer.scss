@@ -79,28 +79,7 @@
     align-items: center;
   }
 
-  .fullpage-loader {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.534);
-    display: flex;
-    justify-content: center;
-    align-items: center;
   
-  
-    .loader {
-      width: 50px;
-      height: 50px;
-      background-color: transparent;
-      border: 8px solid rgba(255, 99, 71, 0.311);
-      border-left-color: tomato;
-      animation: 0.8s loader infinite linear;
-      border-radius: 50%;
-    }
-  }
   
 }
 
