@@ -2,61 +2,68 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const { Configuration, OpenAIApi } = require("openai");
+const { OpenAI } = require("openai"); // From the official openai npm package
 
-// 1) Configure OpenAI with the v3 style
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-const openai = new OpenAIApi(configuration);
-
-// 2) Create Express app
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 3) Example route for AI fix-code
+// 1) Setup your AI/ML API constants
+const baseURL = "https://api.aimlapi.com/v1";
+const apiKey = process.env.AIML_API_KEY; // Store your AI/ML API key in .env
+
+// 2) Create an instance of the "OpenAI" client pointing to the AI/ML API baseURL
+const aimlAPI = new OpenAI({
+  apiKey,  // e.g., "sk-key-xxxxx"
+  baseURL, // "https://api.aimlapi.com/v1"
+});
+
+// 3) Example route to test or "fix code"
 app.post("/api/ai/fix-code", async (req, res) => {
   try {
-    const { code, language } = req.body;
-    console.log("Received code:", code);
-    console.log("Language:", language);
+    // For now, let's treat the user code as the "user prompt"
+    // or you can pass in something else to keep it simple
+    const { code } = req.body;
 
-    // Build a simple prompt
-    const prompt = `
-      You are a coding assistant. The user has provided the following ${language} code:
-      ---
-      ${code}
-      ---
-      Please analyze the code for bugs or improvements, 
-      and provide a short explanation plus a revised code snippet.
-    `;
+    // Hard-code a system prompt or build it from your needs
+    const systemPrompt = "You are a coding assistant. Provide concise improvements.";
+    // Or use your travel example snippet for testing:
+    // const systemPrompt = "You are a travel agent. Be descriptive and helpful.";
 
-    // 4) Use createChatCompletion with GPT-3.5-turbo
-    const response = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
+    // If you want to skip code entirely for now, you can do something simple:
+    // const userPrompt = "Tell me a joke about JavaScript";
+    // But let's assume you at least read some user input from the front end
+    const userPrompt = code || "Tell me about San Francisco"; // fallback if none
+
+    // 4) Make the chat completion request
+    const completion = await aimlAPI.chat.completions.create({
+      // The AI/ML API’s example uses Mistral-7B:
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: "You are a coding assistant. Keep answers concise."
+          content: systemPrompt,
         },
         {
           role: "user",
-          content: prompt
-        }
+          content: userPrompt,
+        },
       ],
+      temperature: 0.7,
+      max_tokens: 256,
     });
 
-    const suggestions = response.data.choices[0].message.content.trim();
+    // 5) Extract the text from the response
+    const response = completion.choices[0].message.content;
 
-    return res.json({ suggestions });
+    // 6) Send it back to the front-end
+    return res.json({ suggestions: response });
   } catch (error) {
-    console.error("OpenAI API Error:", error);
+    console.error("AIML API Error:", error);
     return res
       .status(500)
-      .json({ error: "AI request failed", details: error.message });
+      .json({ error: "AIML API request failed", details: error.message });
   }
 });
 
-// 5) Export the app for server.js to use
 module.exports = app;

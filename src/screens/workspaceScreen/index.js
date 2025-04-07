@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom"; // useNavigate for "home" link
 import "./WSindex.scss";
 import { EditorContainer } from "./editorContainer";
 import { makeSubmission } from "./service";
@@ -8,16 +8,16 @@ export const WorkspaceScreen = () => {
   const params = useParams();
   const { fileId, folderId } = params;
 
-  // Track the user's input for code execution
+  const navigate = useNavigate();
+
+  // For the nav menu (burger toggle)
+  const [isNavOpen, setIsNavOpen] = useState(false);
+
+  // Input / Output / AI states 
   const [input, setInput] = useState("");
-  // Track the output after code runs
   const [output, setOutput] = useState("");
-  // Track AI suggestions once the AI feature is implemented
   const [aiSuggestions, setAiSuggestions] = useState("");
-
-  // Which tab is currently visible
-  const [activeTab, setActiveTab] = useState("input"); // 'input', 'output', or 'ai'
-
+  const [activeTab, setActiveTab] = useState("input");
   const [showLoader, setShowLoader] = useState(false);
 
   const importInput = (e) => {
@@ -33,7 +33,7 @@ export const WorkspaceScreen = () => {
       alert("Please choose a valid text file");
     }
   };
-
+  
   const exportOutput = () => {
     // Same as before
     const outputValue = output.trim();
@@ -104,31 +104,53 @@ export const WorkspaceScreen = () => {
       setActiveTab("ai");
     }
   };
+
+  // For logo click: navigate to home
+  const goHome = () => {
+    // This can eventually navigate to "/" or any route you create
+    navigate("/"); 
+  };
   
 
   return (
     <div className="workspace-container">
-      {/* 1) HEADER */}
-      <div className="header-container">
-        <img src="./BFlogo.png" className="logo" alt="logo" />
-      </div>
+      {/* HEADER / NAVBAR */}
+      <header className="main-header">
+        <div className="logo-area" onClick={goHome}>
+          <img src="./BFlogo.png" className="logo" alt="logo" />
+        </div>
 
-      {/* 2) CONTENT */}
+        {/* Hamburger icon (shown on small screens) */}
+        <div
+          className="burger"
+          onClick={() => setIsNavOpen((prev) => !prev)}
+        >
+          <span className="material-icons">menu</span>
+        </div>
+
+        {/* Nav Links */}
+        <nav className={isNavOpen ? "nav-links open" : "nav-links"}>
+          {/* Example links, replace with real routes later */}
+          <a href="#page1" onClick={() => setIsNavOpen(false)}>Page1</a>
+          <a href="#page2" onClick={() => setIsNavOpen(false)}>Page2</a>
+          <a href="#page3" onClick={() => setIsNavOpen(false)}>Page3</a>
+        </nav>
+      </header>
+
+      {/* Rest of the content */}
       <div className="content-container">
-        {/* LEFT SIDE: Editor */}
+        {/* Editor on the left */}
         <div className="editor-container">
           <EditorContainer
             fileId={fileId}
             folderId={folderId}
             runCode={runCode}
             runAI={runAI}
-            // We will handle "Run AI" in a future step (or you can add a prop here)
           />
         </div>
 
-        {/* RIGHT SIDE: TABS + PANEL */}
+        {/* Right-side tabs */}
         <div className="tabs-container">
-          {/* Tab Buttons */}
           <div className="tabs-header">
             <button
               className={activeTab === "input" ? "active" : ""}
@@ -150,7 +172,6 @@ export const WorkspaceScreen = () => {
             </button>
           </div>
 
-          {/* Tab Content */}
           <div className="tabs-content">
             {activeTab === "input" && (
               <div className="input-container">
@@ -203,7 +224,6 @@ export const WorkspaceScreen = () => {
         </div>
       </div>
 
-      {/* 3) LOADER */}
       {showLoader && (
         <div className="fullpage-loader">
           <div className="loader"></div>
