@@ -1,12 +1,18 @@
-import { use, useContext, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import "./editorContainer.scss";
 import "./WSindex.scss";
 import Editor from "@monaco-editor/react";
 import { WorkspaceContext } from "../../providers/workspaceProvider";
 
+// Update the editorOptions object:
 const editorOptions = {
   fontSize: 15,
   wordWrap: "on",
+  minimap: { enabled: false },
+  scrollBeyondLastLine: false,
+  automaticLayout: true, // This helps with resize issues
+  padding: { top: 10 },
+  fixedOverflowWidgets: true // This helps prevent overflow issues
 };
 
 const fileExtensionMapping = {
@@ -15,6 +21,8 @@ const fileExtensionMapping = {
   python: "py",
   java: "java",
 };
+
+
 
 export const EditorContainer = ({ fileId, folderId, runCode, runAI }) => {
   const { getDefaultCode, getLanguage, updateLanguage, saveCode } =
@@ -32,6 +40,31 @@ export const EditorContainer = ({ fileId, folderId, runCode, runAI }) => {
   };
 
   const [isFullScreen, setIsFullScreen] = useState(false);
+  // Add this useEffect to properly handle Monaco Editor resizing
+useEffect(() => {
+  // Force relayout of Monaco editor when container size changes
+  const handleResize = () => {
+    if (window.monaco && window.monaco.editor) {
+      const editors = window.monaco.editor.getEditors();
+      if (editors.length) {
+        editors.forEach(editor => {
+          editor.layout();
+        });
+      }
+    }
+  };
+
+  // Add a small delay to ensure the layout has settled
+  const resizeWithDelay = () => {
+    setTimeout(handleResize, 100);
+  };
+
+  window.addEventListener('resize', resizeWithDelay);
+  
+  return () => {
+    window.removeEventListener('resize', resizeWithDelay);
+  };
+}, []);
 
   const onUploadCode = (event) => {
     const file = event.target.files[0];
@@ -52,7 +85,7 @@ export const EditorContainer = ({ fileId, folderId, runCode, runAI }) => {
     const codeValue = codeRef.current?.trim();
 
     if (!codeValue) {
-      alert("Please Type Some code in the editor before exporting");
+      alert("Please type some code in the editor before exporting");
       return;
     }
 
@@ -81,7 +114,16 @@ export const EditorContainer = ({ fileId, folderId, runCode, runAI }) => {
 
   const onSaveCode = () => {
     saveCode(fileId, folderId, codeRef.current);
-    alert("Code Saved Successfully");
+    // Use a more subtle notification instead of alert
+    const notification = document.createElement("div");
+    notification.className = "save-notification";
+    notification.textContent = "Code saved successfully";
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.classList.add("fade-out");
+      setTimeout(() => document.body.removeChild(notification), 500);
+    }, 2000);
   };
 
   const fullScreen = () => {
@@ -97,6 +139,8 @@ export const EditorContainer = ({ fileId, folderId, runCode, runAI }) => {
     runAI(codeRef.current, language);
   };
 
+  
+
   return (
     <div
       className="root-editor-container"
@@ -104,26 +148,32 @@ export const EditorContainer = ({ fileId, folderId, runCode, runAI }) => {
     >
       <div className="editor-header">
         <div className="editor-left-container">
-          <b className="title">"title of the card"</b>
+          <b className="title">Code Editor</b>
           <span className="material-icons">edit</span>
-          <button onClick={onSaveCode}>Save Code</button>
+          <button onClick={onSaveCode}>
+            <span className="material-icons">save</span>
+            Save Code
+          </button>
         </div>
 
         <div className="editor-left-container">
-          <button onClick={onRunAI}>RUN AI</button>
+          <button onClick={onRunAI} className="ai-button">
+            <span className="material-icons">auto_fix_high</span>
+            Run AI
+          </button>
         </div>
 
         <div className="editor-right-container">
           <select onChange={onChangeLanguage} value={language}>
-            <option value="cpp">cpp</option>
-            <option value="javascript">javascript</option>
-            <option value="java">java</option>
-            <option value="python">python</option>
+            <option value="cpp">C++</option>
+            <option value="javascript">JavaScript</option>
+            <option value="java">Java</option>
+            <option value="python">Python</option>
           </select>
 
           <select onChange={onChangeTheme} value={theme}>
-            <option value="vs-dark">vs-dark</option>
-            <option value="vs-light">vs-light</option>
+            <option value="vs-dark">Dark Theme</option>
+            <option value="vs-light">Light Theme</option>
           </select>
         </div>
       </div>
@@ -141,8 +191,10 @@ export const EditorContainer = ({ fileId, folderId, runCode, runAI }) => {
 
       <div className="editor-footer">
         <button className="btn" onClick={fullScreen}>
-          <span className="material-icons">fullscreen</span>
-          <span>{isFullScreen ? "Minimize" : "Full Screen"}</span>
+          <span className="material-icons">
+            {isFullScreen ? "fullscreen_exit" : "fullscreen"}
+          </span>
+          <span>{isFullScreen ? "Exit Fullscreen" : "Fullscreen"}</span>
         </button>
 
         <label htmlFor="import-code" className="btn">
@@ -172,11 +224,12 @@ export const EditorContainer = ({ fileId, folderId, runCode, runAI }) => {
 
 const styles = {
   fullScreen: {
-    position: "absolute",
+    position: "fixed",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 10,
+    zIndex: 1000,
+    borderRadius: 0,
   },
 };

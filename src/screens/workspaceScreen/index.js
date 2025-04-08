@@ -1,17 +1,58 @@
-import React, { useState, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom"; // useNavigate for "home" link
+import React, { useState, useCallback, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import "./WSindex.scss";
 import { EditorContainer } from "./editorContainer";
 import { makeSubmission } from "./service";
 
+// ResizeObserver error prevention
+const debounce = (fn, delay) => {
+  let timeoutId;
+  return (...args) => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    timeoutId = setTimeout(() => {
+      fn(...args);
+    }, delay);
+  };
+};
+
+// Add this to your index.js file or wherever you initialize your React app
+
+// Prevent ResizeObserver loop limit exceeded error
+const resizeObserverError = error => {
+  if (error.message.includes('ResizeObserver loop limit exceeded') || 
+      error.message.includes('ResizeObserver loop completed with undelivered notifications')) {
+    // Just returning prevents the error from being logged to the console
+    return;
+  }
+  // For all other errors, log as normal
+  console.error(error);
+};
+
+// Add the error handler
+window.addEventListener('error', event => {
+  resizeObserverError(event.error);
+});
+
+// Handle promise rejection errors too
+window.addEventListener('unhandledrejection', event => {
+  if (event.reason instanceof Error) {
+    resizeObserverError(event.reason);
+  }
+});
 export const WorkspaceScreen = () => {
+
+  
   const params = useParams();
   const { fileId, folderId } = params;
-
   const navigate = useNavigate();
 
   // For the nav menu (burger toggle)
   const [isNavOpen, setIsNavOpen] = useState(false);
+  
+  // State for responsive layout
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   // Input / Output / AI states 
   const [input, setInput] = useState("");
@@ -19,6 +60,19 @@ export const WorkspaceScreen = () => {
   const [aiSuggestions, setAiSuggestions] = useState("");
   const [activeTab, setActiveTab] = useState("input");
   const [showLoader, setShowLoader] = useState(false);
+
+  // Handle window resize for responsive layout
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   const importInput = (e) => {
     // Same as before
@@ -42,8 +96,6 @@ export const WorkspaceScreen = () => {
       return;
     }
 
-    
-
     const blob = new Blob([outputValue], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -52,7 +104,6 @@ export const WorkspaceScreen = () => {
     link.click();
   };
 
-  // Callback for the code execution
   const callback = ({ apiStatus, data, message }) => {
     if (apiStatus === "loading") {
       setShowLoader(true);
@@ -60,6 +111,8 @@ export const WorkspaceScreen = () => {
     } else if (apiStatus === "error") {
       setShowLoader(false);
       setOutput("Something went wrong");
+      // After it fails, maybe you still want to show output tab:
+      setActiveTab("output");
     } else {
       // success
       setShowLoader(false);
@@ -68,6 +121,8 @@ export const WorkspaceScreen = () => {
       } else {
         setOutput(atob(data.stderr));
       }
+      // Switch to Output after data is ready
+      setActiveTab("output");
     }
   };
 
@@ -107,17 +162,28 @@ export const WorkspaceScreen = () => {
 
   // For logo click: navigate to home
   const goHome = () => {
-    // This can eventually navigate to "/" or any route you create
     navigate("/"); 
   };
   
+  useEffect(() => {
+    const handleResize = debounce(() => {
+      setIsMobile(window.innerWidth <= 768);
+    }, 100); // 100ms debounce
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   return (
     <div className="workspace-container">
       {/* HEADER / NAVBAR */}
       <header className="main-header">
         <div className="logo-area" onClick={goHome}>
-          <img src="./BFlogo.png" className="logo" alt="logo" />
+          <img src="/BFlogo.png" className="logo" alt="logo" />
+          <span className="logo-text">BUGGFIX</span>
         </div>
 
         {/* Hamburger icon (shown on small screens) */}
@@ -130,16 +196,15 @@ export const WorkspaceScreen = () => {
 
         {/* Nav Links */}
         <nav className={isNavOpen ? "nav-links open" : "nav-links"}>
-          {/* Example links, replace with real routes later */}
-          <a href="#page1" onClick={() => setIsNavOpen(false)}>Page1</a>
-          <a href="#page2" onClick={() => setIsNavOpen(false)}>Page2</a>
-          <a href="#page3" onClick={() => setIsNavOpen(false)}>Page3</a>
+          <a href="#dashboard" onClick={() => setIsNavOpen(false)}>Dashboard</a>
+          <a href="#projects" onClick={() => setIsNavOpen(false)}>Projects</a>
+          <a href="#settings" onClick={() => setIsNavOpen(false)}>Settings</a>
         </nav>
       </header>
 
       {/* Rest of the content */}
       <div className="content-container">
-        {/* Editor on the left */}
+        {/* Editor on the left (or top on mobile) */}
         <div className="editor-container">
           <EditorContainer
             fileId={fileId}
@@ -149,26 +214,29 @@ export const WorkspaceScreen = () => {
           />
         </div>
 
-        {/* Right-side tabs */}
+        {/* Right-side tabs (or bottom on mobile) */}
         <div className="tabs-container">
           <div className="tabs-header">
             <button
               className={activeTab === "input" ? "active" : ""}
               onClick={() => setActiveTab("input")}
             >
-              Input
+              <span className="material-icons">input</span>
+              {!isMobile && "Input"}
             </button>
             <button
               className={activeTab === "output" ? "active" : ""}
               onClick={() => setActiveTab("output")}
             >
-              Output
+              <span className="material-icons">output</span>
+              {!isMobile && "Output"}
             </button>
             <button
               className={activeTab === "ai" ? "active" : ""}
               onClick={() => setActiveTab("ai")}
             >
-              AI Suggestions
+              <span className="material-icons">psychology</span>
+              {!isMobile && "AI Suggestions"}
             </button>
           </div>
 
@@ -180,7 +248,7 @@ export const WorkspaceScreen = () => {
                   <button className="icon-container">
                     <label htmlFor="inputFile" style={{ cursor: "pointer" }}>
                       <span className="material-icons">cloud_upload</span>
-                      <b>Import Input</b>
+                      <b>Import</b>
                     </label>
                   </button>
                   <input
@@ -193,6 +261,7 @@ export const WorkspaceScreen = () => {
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
+                  placeholder="Enter your input here..."
                 />
               </div>
             )}
@@ -203,20 +272,26 @@ export const WorkspaceScreen = () => {
                   <b>Output:</b>
                   <button className="icon-container" onClick={exportOutput}>
                     <span className="material-icons">cloud_download</span>
-                    <b>Export Output</b>
+                    <b>Export</b>
                   </button>
                 </div>
-                <textarea readOnly value={output} />
+                <textarea 
+                  readOnly 
+                  value={output} 
+                  placeholder="Output will appear here after running your code..."
+                />
               </div>
             )}
 
             {activeTab === "ai" && (
               <div className="ai-suggestions-container">
-                <b>AI Suggestions:</b>
+                <div className="output-header">
+                  <b>AI Suggestions:</b>
+                </div>
                 <textarea
                   readOnly
                   value={aiSuggestions}
-                  placeholder="No AI suggestions yet."
+                  placeholder="AI suggestions will appear here when you use the 'Run AI' button..."
                 />
               </div>
             )}

@@ -2,38 +2,157 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  background-color: #121212;
+
+  .main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1e1e1e;
+    padding: 0.5rem 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    position: relative;
+    z-index: 10;
+    /* Ensure header is always visible */
+    position: sticky;
+    top: 0;
+    
+    .logo-area {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+      
+      &:hover {
+        transform: scale(1.05);
+      }
+      
+      .logo {
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 12px;
+      }
+      
+      .logo-text {
+        color: #00b8a2;
+        font-weight: bold;
+        font-size: 1.2rem;
+        
+        @media (max-width: 500px) {
+          display: none; /* Hide text on very small screens */
+        }
+      }
+    }
+    
+    .burger {
+      display: none;
+      color: #00b8a2;
+      cursor: pointer;
+      font-size: 24px;
+      
+      @media (max-width: 768px) {
+        display: block;
+      }
+    }
+    
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      
+      a {
+        color: #00b8a2;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 1rem;
+        padding: 0.5rem 0.8rem;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+        position: relative;
+        
+        &:hover {
+          background-color: rgba(0, 184, 162, 0.1);
+          
+          &:after {
+            transform: scaleX(1);
+          }
+        }
+        
+        &:after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 2px;
+          background-color: #00b8a2;
+          transform: scaleX(0);
+          transition: transform 0.3s ease;
+        }
+      }
+      
+      @media (max-width: 768px) {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        flex-direction: column;
+        background-color: #1e1e1e;
+        width: 200px;
+        padding: 1rem;
+        gap: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        
+        &.open {
+          transform: translateX(0);
+        }
+        
+        a {
+          width: 100%;
+          text-align: center;
+        }
+      }
+    }
+  }
 
   .icon-container {
     display: flex;
     gap: 10px;
     align-items: center;
     font-size: 16px;
-    padding: 6px;
     cursor: pointer;
-    
-    transition-duration: 0.8s;
+    transition-duration: 0.3s;
     border-radius: 5px;
-
     padding: 4px 10px;
     color: #00b8a2;
     background-color: #2a3d3a;
     
+    &:hover {
+      background-color: #3a4d4a;
+      transform: translateY(-2px);
+    }
   }
 
   .content-container {
-    gap: 20px;
-    flex-grow: 1;
-    display: grid;
-    grid-template-columns: 3fr 2fr;
-    background-color: #2a3d3a;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    background-color: #1a1a1a;
     padding: 4px;
+    min-height: 0; /* Important for Firefox flex behavior */
+    overflow: hidden;
     
+    @media (min-width: 769px) {
+      flex-direction: row;
+      gap: 12px; /* Added gap between containers */
+    }
   }
 
   .logo {
-    height: 100px;
+    height: 40px;
     border-radius: 50%;
-    
   }
 
   .header-container {
@@ -41,104 +160,172 @@
     justify-content: center;
     background-color: #1e1e1e;
     padding: 2px 0;
-    
   }
 
   .input-output-container {
+    display: flex;
+    flex-direction: column;
+
+    .input-header {
+      background-color: #ededed;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
     
+    textarea {
+      flex-grow: 1;
+      border: none;
+      resize: none;
+      padding: 10px;
+      font-size: 20px;
+    }
+
+    textarea:focus {
+      outline: none;
+    }
+
+    button {
+      border: none;
+    }
+  }
+
+  .editor-container {
+    flex: 3;
+    min-height: 0; /* Important for Firefox flex behavior */
     display: flex;
     flex-direction: column;
     
+    @media (max-width: 768px) {
+      order: 1;
+      height: 70vh; /* Give more space to the editor */
+    }
     
-
-        .input-header {
-        background-color: #ededed;
-        padding: 10px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        
-        }
-        
-        textarea {
-        flex-grow: 1;
-        border: none;
-        resize: none;
-        padding: 10px;
-        font-size: 20px;
-        }
-
-        textarea:focus {
-        outline: none;
-        }
-
-        button {
-        border: none;
-        }
+    @media (min-width: 769px) {
+      max-height: calc(100vh - 110px); /* Leave room for header */
+      flex: 2; /* Match tabs container on desktop */
+    }
   }
 
+  .tabs-container {
+    display: flex;
+    flex-direction: column;
+    flex: 2;
+    min-height: 0; /* Important for Firefox flex behavior */
+    
+    @media (max-width: 768px) {
+      order: 2;
+      height: 25vh; /* Reduced to give more editor space */
+    }
+  }
 
-    .editor-container {
+  
+  .tabs-header {
+    display: flex;
+    background-color: #1e1e1e;
+    
+    button {
+      flex: 1;
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #9e9e9e;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+  
+      &.active {
+        background: #2a3d3a;
+        border-bottom: 2px solid #00b8a2;
+        color: #00b8a2;
+        font-weight: bold;
+      }
       
-      grid-row: 1 / 3;
+      &:hover:not(.active) {
+        background: #2a2a2a;
+        color: #c0c0c0;
+      }
+      
+      .material-icons {
+        font-size: 18px;
+      }
     }
-
-    .tabs-container {
-      display: flex;
-      flex-direction: column;
+  }
+  
+  .tabs-content {
+    flex-grow: 1;
+    background: #2e2e2e;
+    color: #e0e0e0;
+    overflow: hidden; /* Changed from auto to hidden */
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Important for Firefox flex behavior */
+    
+    textarea {
       width: 100%;
-      // adjust as needed
+      flex: 1;
+      min-height: 0; /* Important for Firefox flex behavior */
+      background-color: #2e2e2e;
+      color: #e0e0e0;
+      border: none;
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 10px;
+      font-family: monospace;
+      resize: none;
+      white-space: pre-wrap; /* Changed to pre-wrap */
+      word-wrap: break-word; /* Added to handle long words */
+      overflow-wrap: break-word; /* Added to break long words */
+      box-sizing: border-box; /* Ensures padding is included in width calculation */
+      max-width: 100%; /* Ensures it doesn't exceed container width */
     }
     
-    .tabs-header {
+    .input-header, .output-header {
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      padding: 10px;
       display: flex;
-      background-color: #f0f0f0;
-      // your preferred styling
-    
-      button {
-        flex: 1;
-        padding: 8px 12px;
-        background: none;
-        border: none;
-        cursor: pointer;
-    
-        &.active {
-          background: #fff;
-          border-bottom: 2px solid #333;
-          font-weight: bold;
+      justify-content: space-between;
+      align-items: center;
+      
+      b {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        
+        .material-icons {
+          font-size: 18px;
         }
       }
     }
-    
-    .tabs-content {
-      flex-grow: 1;
-      background: #fff;
-      padding: 10px;
-      // your styling
-    }
+  }
 
-    .fullpage-loader {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(0, 0, 0, 0.534);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    
-    
-      .loader {
-        width: 50px;
-        height: 50px;
-        background-color: transparent;
-        border: 8px solid rgba(255, 99, 71, 0.311);
-        border-left-color: tomato;
-        animation: 0.8s loader infinite linear;
-        border-radius: 50%;
-      }
+  .fullpage-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  
+    .loader {
+      width: 50px;
+      height: 50px;
+      background-color: transparent;
+      border: 8px solid rgba(0, 184, 162, 0.3);
+      border-left-color: #00b8a2;
+      animation: 0.8s loader infinite linear;
+      border-radius: 50%;
     }
+  }
 }
 
 @keyframes loader {
@@ -150,3 +337,69 @@
   }
 }
 
+.ai-suggestions-container {
+  padding: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0; /* Important for Firefox flex behavior */
+  
+  textarea {
+    flex-grow: 1;
+    font-family: monospace;
+  }
+}
+
+.input-container, .output-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0; /* Important for Firefox flex behavior */
+  
+  textarea {
+    flex-grow: 1;
+  }
+}
+
+.save-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #2a5d3a;
+  color: white;
+  padding: 12px 16px;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1100;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+  
+  &.fade-out {
+    opacity: 0;
+  }
+}
+
+/* Mobile-specific styles to ensure buttons are easily accessible */
+@media (max-width: 768px) {
+  .workspace-container {
+    .input-header, .output-header {
+      button {
+        padding: 8px;
+        
+        b {
+          font-size: 14px;
+        }
+      }
+    }
+  }
+}
+
+/* Additional media query to ensure responsiveness */
+@media (max-width: 768px) {
+  .workspace-container .tabs-content textarea {
+    font-size: 12px; /* Smaller font on mobile to fit better */
+    padding: 6px;
+  }
+}
