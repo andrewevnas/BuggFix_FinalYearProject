@@ -117,6 +117,123 @@
     }
   }
 
+  /* Add new animation styles */
+  .animation-in-progress {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    padding: 10px 16px;
+    background-color: rgba(0, 184, 162, 0.2);
+    border: 1px solid #00b8a2;
+    border-radius: 4px;
+    color: #00b8a2;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: pulse 1.5s ease-in-out infinite;
+    
+    .animation-indicator {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background-color: #00b8a2;
+      position: relative;
+      
+      &:after {
+        content: 'Typing...';
+        position: absolute;
+        left: 24px;
+        top: 0;
+        white-space: nowrap;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      
+      &:before {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        right: -4px;
+        bottom: -4px;
+        border-radius: 50%;
+        border: 2px solid #00b8a2;
+        animation: ripple 1.5s linear infinite;
+      }
+    }
+  }
+}
+
+/* New cursor blinking animation */
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Animation for the typing indicator */
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(0, 184, 162, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(0, 184, 162, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 184, 162, 0); }
+}
+
+@keyframes ripple {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* Highlight for the editor during animation */
+.root-editor-container.animating {
+  .editor-body {
+    position: relative;
+    
+    &:after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, 
+        rgba(0, 184, 162, 0.05) 0%, 
+        rgba(184, 0, 162, 0.05) 100%);
+      pointer-events: none;
+      z-index: 10;
+    }
+  }
+  
+  /* Disable buttons during animation */
+  button:disabled,
+  select:disabled,
+  .btn.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    
+    &:hover {
+      background-color: inherit;
+      transform: none !important;
+    }
+  }
+  
+  /* Add a subtle animation to the current line being typed */
+  .editing-animation {
+    .current-line {
+      background-color: rgba(0, 184, 162, 0.1);
+      animation: highlight-current-line 1s ease-in-out infinite;
+    }
+  }
+}
+
+/* Animation for the current line highlighting */
+@keyframes highlight-current-line {
+  0%, 100% { background-color: rgba(0, 184, 162, 0.1); }
+  50% { background-color: rgba(0, 184, 162, 0.2); }
+}
+
+
+
   .icon-container {
     display: flex;
     gap: 10px;
@@ -326,7 +443,7 @@
       border-radius: 50%;
     }
   }
-}
+
 
 @keyframes loader {
   from {
@@ -348,6 +465,29 @@
   textarea {
     flex-grow: 1;
     font-family: monospace;
+  }
+  
+  /* New styles for AI suggestion feedback */
+  .output-header {
+    button {
+      background-color: #3a2a3d; /* Purple-ish for AI related buttons */
+      color: #b800a2;
+      
+      &:hover {
+        background-color: #4a3a4d;
+        transform: translateY(-2px);
+      }
+      
+      .material-icons {
+        font-size: 18px;
+        color: #b800a2;
+      }
+      
+      /* Animation for toggle button */
+      &:active {
+        transform: scale(0.95);
+      }
+    }
   }
 }
 
@@ -375,10 +515,60 @@
   z-index: 1100;
   opacity: 1;
   transition: opacity 0.5s ease;
+  animation: notification-slide-in 0.3s ease-out;
   
   &.fade-out {
     opacity: 0;
   }
+  
+  /* Different colors for different notifications */
+  &.ai-update {
+    background-color: #3a2a3d; /* Purple for AI updates */
+  }
+  
+  &.revert {
+    background-color: #4a2a3d; /* Red-ish for reverting changes */
+  }
+}
+
+/* Notification animation */
+@keyframes notification-slide-in {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Add a subtle highlight animation for the new code */
+@keyframes highlight-new-code {
+  0% {
+    background-color: rgba(184, 0, 162, 0.1);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+/* Add an animation for code toggle */
+@keyframes code-toggle-flash {
+  0% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.code-toggle {
+  animation: code-toggle-flash 0.5s ease-out;
+}
+
+.highlight-new-code {
+  animation: highlight-new-code 2s ease-out;
 }
 
 /* Mobile-specific styles to ensure buttons are easily accessible */

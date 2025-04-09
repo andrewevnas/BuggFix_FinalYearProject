@@ -4,15 +4,14 @@ import "./WSindex.scss";
 import Editor from "@monaco-editor/react";
 import { WorkspaceContext } from "../../providers/workspaceProvider";
 
-// Update the editorOptions object:
 const editorOptions = {
   fontSize: 15,
   wordWrap: "on",
   minimap: { enabled: false },
   scrollBeyondLastLine: false,
-  automaticLayout: true, // This helps with resize issues
+  automaticLayout: true,
   padding: { top: 10 },
-  fixedOverflowWidgets: true // This helps prevent overflow issues
+  fixedOverflowWidgets: true
 };
 
 const fileExtensionMapping = {
@@ -22,51 +21,74 @@ const fileExtensionMapping = {
   java: "java",
 };
 
-
-
-export const EditorContainer = ({ fileId, folderId, runCode, runAI }) => {
+export const EditorContainer = ({ 
+  fileId, 
+  folderId, 
+  runCode, 
+  runAI, 
+  code,  // Prop for code
+  setCode,  // Prop to update code
+  originalCode,  // Prop to track original code
+  resetToOriginalCode,  // This will now toggle between versions with animation
+  updateCodeFromAI,  // Prop to handle AI suggested code updates
+  isViewingOriginalCode, // Added to properly reflect UI state
+  onEditorDidMount, // New prop to pass editor instance to parent
+  isAnimating = false // Flag to indicate if animation is in progress
+}) => {
   const { getDefaultCode, getLanguage, updateLanguage, saveCode } =
     useContext(WorkspaceContext);
 
-  const [code, setCode] = useState(() => {
-    return getDefaultCode(fileId, folderId);
-  });
-
   const [language, setLanguage] = useState(() => getLanguage(fileId, folderId));
   const [theme, setTheme] = useState("vs-dark");
-  const codeRef = useRef(code);
-  const onChangeCode = (newCode) => {
-    codeRef.current = newCode;
-  };
+  
+  // We still keep a ref for editor-internal operations
+  const editorRef = useRef(null);
 
-  const [isFullScreen, setIsFullScreen] = useState(false);
-  // Add this useEffect to properly handle Monaco Editor resizing
-useEffect(() => {
-  // Force relayout of Monaco editor when container size changes
-  const handleResize = () => {
-    if (window.monaco && window.monaco.editor) {
-      const editors = window.monaco.editor.getEditors();
-      if (editors.length) {
-        editors.forEach(editor => {
-          editor.layout();
-        });
-      }
+  const onChangeCode = (newCode) => {
+    // Don't update code during animation to avoid conflicts
+    if (!isAnimating) {
+      setCode(newCode);
     }
   };
 
-  // Add a small delay to ensure the layout has settled
-  const resizeWithDelay = () => {
-    setTimeout(handleResize, 100);
-  };
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
-  window.addEventListener('resize', resizeWithDelay);
-  
-  return () => {
-    window.removeEventListener('resize', resizeWithDelay);
+  useEffect(() => {
+    const handleResize = () => {
+      const newIsMobile = window.innerWidth <= 768;
+      setIsMobile(newIsMobile);
+      
+      // Adjust editor layout on resize
+      if (window.monaco && window.monaco.editor) {
+        const editors = window.monaco.editor.getEditors();
+        if (editors.length) {
+          setTimeout(() => {
+            editors.forEach(editor => editor.layout());
+          }, 100);
+        }
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // Toggle code version and update the state
+  const toggleCodeVersion = () => {
+    // Don't allow toggle during animation
+    if (!isAnimating) {
+      resetToOriginalCode(); // Call the toggle function from parent which now includes animation
+    }
   };
-}, []);
 
   const onUploadCode = (event) => {
+    // Don't allow uploading during animation
+    if (isAnimating) return;
+    
     const file = event.target.files[0];
     const fileType = file.type.includes("text");
     if (fileType) {
@@ -82,20 +104,20 @@ useEffect(() => {
   };
 
   const onExportCode = () => {
-    const codeValue = codeRef.current?.trim();
+    // Don't allow exporting during animation
+    if (isAnimating) return;
+    
+    // Use the current code state directly, not the ref
+    const codeValue = code?.trim();
 
     if (!codeValue) {
       alert("Please type some code in the editor before exporting");
       return;
     }
 
-    // 1. create a blob / instant file in the memory
     const codeBlob = new Blob([codeValue], { type: "text/plain" });
-
-    // 2. create the downloadable link with blob data
     const downloadUrl = URL.createObjectURL(codeBlob);
 
-    // 3. create a clickable link to download the blob/file
     const link = document.createElement("a");
     link.href = downloadUrl;
     link.download = `code.${fileExtensionMapping[language]}`;
@@ -103,9 +125,14 @@ useEffect(() => {
   };
 
   const onChangeLanguage = (e) => {
-    updateLanguage(fileId, folderId, e.target.value);
-    setCode(getDefaultCode(fileId, folderId));
-    setLanguage(e.target.value);
+    // Don't allow language change during animation
+    if (isAnimating) return;
+    
+    const newLanguage = e.target.value;
+    updateLanguage(fileId, folderId, newLanguage);
+    const defaultCode = getDefaultCode(fileId, folderId);
+    setCode(defaultCode);
+    setLanguage(newLanguage);
   };
 
   const onChangeTheme = (e) => {
@@ -113,8 +140,12 @@ useEffect(() => {
   };
 
   const onSaveCode = () => {
-    saveCode(fileId, folderId, codeRef.current);
-    // Use a more subtle notification instead of alert
+    // Don't allow saving during animation
+    if (isAnimating) return;
+    
+    // Use the current code state directly, not the ref
+    saveCode(fileId, folderId, code);
+    
     const notification = document.createElement("div");
     notification.className = "save-notification";
     notification.textContent = "Code saved successfully";
@@ -131,40 +162,74 @@ useEffect(() => {
   };
 
   const onRunCode = () => {
-    runCode({ code: codeRef.current, language });
+    // Don't allow running during animation
+    if (isAnimating) return;
+    
+    // Important: We're now calling runCode with only the language
+    // The code is now accessed directly from the parent's state
+    runCode({ language });
   };
 
   const onRunAI = () => {
-    // We pass the current codeRef + the language to the parent's function
-    runAI(codeRef.current, language);
+    // Don't allow running AI during animation
+    if (isAnimating) return;
+    
+    // Save the current code as original before AI suggestions
+    if (!originalCode) {
+      updateCodeFromAI(code, null);
+    }
+    runAI(code, language);
   };
 
-  
+  // Store reference to the editor instance and pass it to the parent
+  const handleEditorDidMount = (editor) => {
+    editorRef.current = editor;
+    if (onEditorDidMount) {
+      onEditorDidMount(editor);
+    }
+  };
 
   return (
     <div
-      className="root-editor-container"
+      className={`root-editor-container ${isAnimating ? 'animating' : ''}`}
       style={isFullScreen ? styles.fullScreen : {}}
     >
       <div className="editor-header">
         <div className="editor-left-container">
           <b className="title">Code Editor</b>
           <span className="material-icons">edit</span>
-          <button onClick={onSaveCode}>
+          <button onClick={onSaveCode} disabled={isAnimating}>
             <span className="material-icons">save</span>
             Save Code
           </button>
         </div>
 
         <div className="editor-left-container">
-          <button onClick={onRunAI} className="ai-button">
+          <button onClick={onRunAI} className="ai-button" disabled={isAnimating}>
             <span className="material-icons">auto_fix_high</span>
             Run AI
           </button>
         </div>
 
+        {/* Toggle button between original and AI code when both versions exist */}
+        {originalCode && (
+          <div className="editor-left-container">
+            <button 
+              onClick={toggleCodeVersion} 
+              className={isViewingOriginalCode ? "ai-button" : "revert-button"}
+              disabled={isAnimating}
+            >
+              <span className="material-icons">
+                {isViewingOriginalCode ? "auto_fix_high" : "restore"}
+              </span>
+              {isAnimating ? "Typing in progress..." : 
+                (isViewingOriginalCode ? "Show AI Code" : "Show Original Code")}
+            </button>
+          </div>
+        )}
+
         <div className="editor-right-container">
-          <select onChange={onChangeLanguage} value={language}>
+          <select onChange={onChangeLanguage} value={language} disabled={isAnimating}>
             <option value="cpp">C++</option>
             <option value="javascript">JavaScript</option>
             <option value="java">Java</option>
@@ -178,26 +243,30 @@ useEffect(() => {
         </div>
       </div>
 
-      <div className="editor-body">
+      <div className={`editor-body ${isAnimating ? 'editing-animation' : ''}`}>
         <Editor
           height={"100%"}
           language={language}
-          options={editorOptions}
+          options={{
+            ...editorOptions,
+            readOnly: isAnimating // Make editor read-only during animation
+          }}
           theme={theme}
           onChange={onChangeCode}
           value={code}
+          onMount={handleEditorDidMount}
         />
       </div>
 
       <div className="editor-footer">
-        <button className="btn" onClick={fullScreen}>
+        <button className="btn" onClick={fullScreen} disabled={isAnimating}>
           <span className="material-icons">
             {isFullScreen ? "fullscreen_exit" : "fullscreen"}
           </span>
           <span>{isFullScreen ? "Exit Fullscreen" : "Fullscreen"}</span>
         </button>
 
-        <label htmlFor="import-code" className="btn">
+        <label htmlFor="import-code" className={`btn ${isAnimating ? 'disabled' : ''}`}>
           <span className="material-icons">cloud_upload</span>
           <span>Import Code</span>
         </label>
@@ -206,14 +275,15 @@ useEffect(() => {
           id="import-code"
           style={{ display: "none" }}
           onChange={onUploadCode}
+          disabled={isAnimating}
         />
 
-        <button className="btn" onClick={onExportCode}>
+        <button className="btn" onClick={onExportCode} disabled={isAnimating}>
           <span className="material-icons">cloud_download</span>
           <span>Export Code</span>
         </button>
 
-        <button className="btn" onClick={onRunCode}>
+        <button className="btn run-btn" onClick={onRunCode} disabled={isAnimating}>
           <span className="material-icons">play_arrow</span>
           <span>Run Code</span>
         </button>

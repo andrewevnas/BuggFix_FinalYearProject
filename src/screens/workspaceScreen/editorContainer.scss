@@ -8,6 +8,27 @@
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 
+  .revert-button {
+    background-color: #4a2a3d; /* Dark purple-ish background */
+    color: #ff6b6b; /* Soft red color for revert */
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    
+    &:hover {
+      background-color: #5a3a4d;
+      color: #ff8787;
+    }
+    
+    /* Add transition effect */
+    transition: all 0.3s ease;
+    
+    /* Add a subtle indicator for the active state */
+    &.active {
+      box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.5);
+    }
+  }
+
   .editor-header {
     background-color: #1a1a1a;
     display: flex;
@@ -77,6 +98,11 @@
       &:hover {
         background-color: #4a3a4d;
       }
+      
+      /* Add an active state indicator */
+      &.active {
+        box-shadow: 0 0 0 2px rgba(184, 0, 162, 0.5);
+      }
     }
   }
 
@@ -86,6 +112,9 @@
     min-height: 200px;
     /* Keep editor from growing too large so footer remains visible */
     max-height: calc(100vh - 200px);
+    
+    /* Add a subtle transition effect when code changes */
+    transition: background-color 0.3s ease;
     
     @media (max-width: 768px) {
       /* Adjust for mobile to ensure footer visibility */

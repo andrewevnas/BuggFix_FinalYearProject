@@ -2,42 +2,54 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const { OpenAI } = require("openai"); // From the official openai npm package
+const { OpenAI } = require("openai");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 1) Setup your AI/ML API constants
 const baseURL = "https://api.aimlapi.com/v1";
-const apiKey = process.env.AIML_API_KEY; // Store your AI/ML API key in .env
+const apiKey = process.env.AIML_API_KEY;
 
-// 2) Create an instance of the "OpenAI" client pointing to the AI/ML API baseURL
 const aimlAPI = new OpenAI({
-  apiKey,  // e.g., "sk-key-xxxxx"
-  baseURL, // "https://api.aimlapi.com/v1"
+  apiKey,
+  baseURL,
 });
 
-// 3) Example route to test or "fix code"
 app.post("/api/ai/fix-code", async (req, res) => {
   try {
-    // For now, let's treat the user code as the "user prompt"
-    // or you can pass in something else to keep it simple
-    const { code } = req.body;
+    const { code, language } = req.body;
 
-    // Hard-code a system prompt or build it from your needs
-    const systemPrompt = "You are a coding assistant. Provide concise improvements.";
-    // Or use your travel example snippet for testing:
-    // const systemPrompt = "You are a travel agent. Be descriptive and helpful.";
+    const systemPrompt = `You are an advanced coding assistant specializing in ${language} code improvement.
 
-    // If you want to skip code entirely for now, you can do something simple:
-    // const userPrompt = "Tell me a joke about JavaScript";
-    // But let's assume you at least read some user input from the front end
-    const userPrompt = code || "Tell me about San Francisco"; // fallback if none
+Your response MUST follow this exact format with these specific markers:
 
-    // 4) Make the chat completion request
+1. ALWAYS place improved code between <AI_CODE> and </AI_CODE> tags
+2. Do NOT include the language name, backticks, or any other markers inside these tags - ONLY the actual code
+3. After the code block, provide a detailed explanation of your changes
+
+Example of proper format:
+
+<AI_CODE>
+// Improved code here
+function improvedExample() {
+  // Implementation details
+}
+</AI_CODE>
+
+Explanation:
+- Point-by-point details about the changes
+- Rationale for each improvement
+- Any performance or readability benefits
+
+If no significant improvements are needed, still provide the original code between <AI_CODE> and </AI_CODE> tags followed by your assessment.
+
+IMPORTANT: The code between the <AI_CODE> tags will be automatically inserted into the user's editor. Everything else will be shown as feedback. DO NOT use backticks or any other code formatting inside or near these tags.`;
+
+    const userPrompt = `Review and suggest improvements for the following ${language} code:
+${code}`;
+
     const completion = await aimlAPI.chat.completions.create({
-      // The AI/ML API’s example uses Mistral-7B:
       model: "gpt-4o",
       messages: [
         {
@@ -49,14 +61,12 @@ app.post("/api/ai/fix-code", async (req, res) => {
           content: userPrompt,
         },
       ],
-      temperature: 0.7,
-      max_tokens: 256,
+      temperature: 0.5, // Lower temperature for more consistent formatting
+      max_tokens: 1024, // Increased to allow for more detailed responses
     });
 
-    // 5) Extract the text from the response
     const response = completion.choices[0].message.content;
 
-    // 6) Send it back to the front-end
     return res.json({ suggestions: response });
   } catch (error) {
     console.error("AIML API Error:", error);

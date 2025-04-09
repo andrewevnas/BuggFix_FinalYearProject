@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import "./WSindex.scss";
 import { EditorContainer } from "./editorContainer";
 import { makeSubmission } from "./service";
+import { parseAIResponse } from "./parseAiResponse";
 
 // ResizeObserver error prevention
 const debounce = (fn, delay) => {
@@ -16,8 +17,6 @@ const debounce = (fn, delay) => {
     }, delay);
   };
 };
-
-// Add this to your index.js file or wherever you initialize your React app
 
 // Prevent ResizeObserver loop limit exceeded error
 const resizeObserverError = error => {
@@ -41,9 +40,8 @@ window.addEventListener('unhandledrejection', event => {
     resizeObserverError(event.reason);
   }
 });
-export const WorkspaceScreen = () => {
 
-  
+export const WorkspaceScreen = () => {
   const params = useParams();
   const { fileId, folderId } = params;
   const navigate = useNavigate();
@@ -60,6 +58,26 @@ export const WorkspaceScreen = () => {
   const [aiSuggestions, setAiSuggestions] = useState("");
   const [activeTab, setActiveTab] = useState("input");
   const [showLoader, setShowLoader] = useState(false);
+  
+  // Code editor states
+  const [code, setCode] = useState(() => {
+    // You should get default code from your context/service here
+    // This is a placeholder
+    return "// Your code here";
+  });
+  
+  // Track original code and AI code versions
+  const [originalCode, setOriginalCode] = useState(null);
+  const [aiCode, setAiCode] = useState(null);
+  
+  // Track whether we're currently viewing original or AI code
+  const [isViewingOriginalCode, setIsViewingOriginalCode] = useState(true);
+  
+  // Reference to the current Monaco editor instance
+  const [editorInstance, setEditorInstance] = useState(null);
+  
+  // State to track if animation is in progress
+  const [isAnimating, setIsAnimating] = useState(false);
 
   // Handle window resize for responsive layout
   useEffect(() => {
@@ -75,7 +93,6 @@ export const WorkspaceScreen = () => {
   }, []);
 
   const importInput = (e) => {
-    // Same as before
     const file = e.target.files[0];
     if (file && file.type.includes("text")) {
       const fileReader = new FileReader();
@@ -89,7 +106,6 @@ export const WorkspaceScreen = () => {
   };
   
   const exportOutput = () => {
-    // Same as before
     const outputValue = output.trim();
     if (!outputValue) {
       alert("Output is Empty");
@@ -127,12 +143,142 @@ export const WorkspaceScreen = () => {
   };
 
   // This is used by EditorContainer to run code
+  // Updated to use the current code state to ensure we run the displayed code
   const runCode = useCallback(
-    ({ code, language }) => {
+    ({ language }) => {
+      // Important: we now directly use the current code state - not ref value
       makeSubmission({ code, language, stdin: input, callback });
     },
-    [input]
+    [input, code] // Add code as a dependency so it updates when code changes
   );
+
+  // Function to toggle between original and AI code with animation
+  const toggleCodeVersion = async () => {
+    // If animation is already in progress, don't allow another toggle
+    if (isAnimating || !editorInstance) return;
+    
+    // Set animating state to block multiple toggles
+    setIsAnimating(true);
+    
+    try {
+      if (isViewingOriginalCode) {
+        // Switch to AI code
+        if (aiCode) {
+          // Instead of directly setting the code state, we'll animate it
+          // First set an empty string to prepare for animation
+          setCode("");
+          
+          // Show notification that we're starting animation
+          const notification = document.createElement("div");
+          notification.className = "save-notification ai-update";
+          notification.textContent = "Displaying AI suggestions...";
+          document.body.appendChild(notification);
+          
+          setTimeout(() => {
+            notification.classList.add("fade-out");
+            setTimeout(() => document.body.removeChild(notification), 500);
+          }, 1000);
+          
+          // Wait a brief moment for the UI to update
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Begin animation
+          await animateCodeTypingEnhanced(editorInstance, aiCode);
+          
+          // After animation completes, update the state
+          setCode(aiCode);
+          setIsViewingOriginalCode(false);
+          
+          // Show notification that animation is complete
+          const completionNotification = document.createElement("div");
+          completionNotification.className = "save-notification ai-update";
+          completionNotification.textContent = "AI code applied";
+          document.body.appendChild(completionNotification);
+          
+          setTimeout(() => {
+            completionNotification.classList.add("fade-out");
+            setTimeout(() => document.body.removeChild(completionNotification), 500);
+          }, 2000);
+        }
+      } else {
+        // Switch to original code
+        if (originalCode) {
+          // Instead of directly setting the code state, we'll animate it
+          // First set an empty string to prepare for animation
+          setCode("");
+          
+          // Show notification that we're starting animation
+          const notification = document.createElement("div");
+          notification.className = "save-notification revert";
+          notification.textContent = "Restoring original code...";
+          document.body.appendChild(notification);
+          
+          setTimeout(() => {
+            notification.classList.add("fade-out");
+            setTimeout(() => document.body.removeChild(notification), 500);
+          }, 1000);
+          
+          // Wait a brief moment for the UI to update
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Begin animation
+          await animateCodeTypingEnhanced(editorInstance, originalCode);
+          
+          // After animation completes, update the state
+          setCode(originalCode);
+          setIsViewingOriginalCode(true);
+          
+          // Show notification that animation is complete
+          const completionNotification = document.createElement("div");
+          completionNotification.className = "save-notification revert";
+          completionNotification.textContent = "Original code restored";
+          document.body.appendChild(completionNotification);
+          
+          setTimeout(() => {
+            completionNotification.classList.add("fade-out");
+            setTimeout(() => document.body.removeChild(completionNotification), 500);
+          }, 2000);
+        }
+      }
+    } catch (error) {
+      console.error("Animation error:", error);
+      
+      // If animation fails, just update the state directly
+      if (isViewingOriginalCode && aiCode) {
+        setCode(aiCode);
+        setIsViewingOriginalCode(false);
+      } else if (!isViewingOriginalCode && originalCode) {
+        setCode(originalCode);
+        setIsViewingOriginalCode(true);
+      }
+    } finally {
+      // Reset animating state
+      setIsAnimating(false);
+    }
+  };
+
+  // Update code from AI suggestions
+  const updateCodeFromAI = (currentCode, newAiCode) => {
+    if (newAiCode === null) {
+      // We're just saving the original state
+      setOriginalCode(currentCode);
+      setIsViewingOriginalCode(true);
+    } else {
+      // Save both versions and update to AI code
+      if (originalCode === null) {
+        setOriginalCode(currentCode);
+      }
+      
+      setAiCode(newAiCode);
+      setCode(newAiCode);
+      setIsViewingOriginalCode(false);
+    }
+  };
+
+  // Function to handle the editor instance being mounted
+  const handleEditorDidMount = (editor) => {
+    setEditorInstance(editor);
+  };
 
   const runAI = async (userCode, language) => {
     try {
@@ -146,8 +292,30 @@ export const WorkspaceScreen = () => {
       setShowLoader(false);
   
       if (data.suggestions) {
-        setAiSuggestions(data.suggestions);
-        setActiveTab("ai"); // show the AI Suggestions tab
+        // Parse the AI response to separate code from feedback
+        const { code: extractedCode, feedback } = parseAIResponse(data.suggestions);
+        
+        // Update the AI suggestions tab with verbal feedback only
+        setAiSuggestions(feedback);
+        
+        // If code was found in the response, update the editor
+        if (extractedCode) {
+          updateCodeFromAI(userCode, extractedCode);
+          
+          // Show a notification that code has been updated
+          const notification = document.createElement("div");
+          notification.className = "save-notification ai-update";
+          notification.textContent = "Code updated with AI suggestions";
+          document.body.appendChild(notification);
+          
+          setTimeout(() => {
+            notification.classList.add("fade-out");
+            setTimeout(() => document.body.removeChild(notification), 500);
+          }, 2000);
+        }
+        
+        // Show the AI Suggestions tab for feedback
+        setActiveTab("ai");
       } else {
         setAiSuggestions("No suggestions returned from server.");
         setActiveTab("ai");
@@ -211,6 +379,14 @@ export const WorkspaceScreen = () => {
             folderId={folderId}
             runCode={runCode}
             runAI={runAI}
+            code={code}
+            setCode={setCode}
+            originalCode={originalCode}
+            resetToOriginalCode={toggleCodeVersion}
+            updateCodeFromAI={updateCodeFromAI}
+            isViewingOriginalCode={isViewingOriginalCode}
+            onEditorDidMount={handleEditorDidMount}
+            isAnimating={isAnimating}
           />
         </div>
 
@@ -287,6 +463,19 @@ export const WorkspaceScreen = () => {
               <div className="ai-suggestions-container">
                 <div className="output-header">
                   <b>AI Suggestions:</b>
+                  {originalCode && aiCode && !isAnimating && (
+                    <button className="icon-container" onClick={() => {
+                      setActiveTab("input");
+                      // If we're looking at original code, show AI code when clicking "View..."
+                      // and vice versa - ensure we're always toggling to the other version
+                      if (isViewingOriginalCode !== false) {
+                        toggleCodeVersion();
+                      }
+                    }}>
+                      <span className="material-icons">code</span>
+                      <b>View {isViewingOriginalCode ? 'AI' : 'Original'} Code</b>
+                    </button>
+                  )}
                 </div>
                 <textarea
                   readOnly
@@ -304,6 +493,83 @@ export const WorkspaceScreen = () => {
           <div className="loader"></div>
         </div>
       )}
+      
+      {isAnimating && (
+        <div className="animation-in-progress">
+          <div className="animation-indicator"></div>
+        </div>
+      )}
     </div>
   );
+};
+
+/**
+ * Enhanced animation that maintains indentation and structure better
+ * @param {Object} editor - Monaco editor instance
+ * @param {string} code - Target code to be typed
+ * @param {number} speed - Typing speed (lower is faster)
+ * @returns {Promise} Promise that resolves when animation is complete
+ */
+export const animateCodeTypingEnhanced = (editor, code, speed = 15) => {
+  return new Promise((resolve) => {
+    // Split target code into lines
+    const targetLines = code.split('\n');
+    
+    // Clear the editor
+    editor.setValue('');
+    
+    let currentLineIndex = 0;
+    
+    // Function to type the next line
+    const typeNextLine = () => {
+      // If we've completed all lines, resolve the promise
+      if (currentLineIndex >= targetLines.length) {
+        resolve();
+        return;
+      }
+      
+      // Get the current line we're working with
+      const currentLine = targetLines[currentLineIndex];
+      
+      // Determine indentation (leading whitespace)
+      const indentation = currentLine.match(/^(\s*)/)[0];
+      const content = currentLine.substring(indentation.length);
+      
+      // First add the indentation instantly (no animation)
+      const currentContent = editor.getValue();
+      editor.setValue(
+        currentContent + 
+        (currentLineIndex > 0 ? '\n' : '') + 
+        indentation
+      );
+      
+      // Then animate typing the content of the line
+      let contentIndex = 0;
+      
+      const typeContent = () => {
+        if (contentIndex >= content.length) {
+          // Move to next line
+          currentLineIndex++;
+          setTimeout(typeNextLine, speed * 2); // Pause between lines
+          return;
+        }
+        
+        // Add the next character
+        editor.setValue(
+          editor.getValue() + content[contentIndex]
+        );
+        
+        contentIndex++;
+        
+        // Schedule the next character
+        setTimeout(typeContent, speed);
+      };
+      
+      // Start typing the content
+      typeContent();
+    };
+    
+    // Start the typing animation
+    typeNextLine();
+  });
 };
