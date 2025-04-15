@@ -1,48 +1,282 @@
 .home-container {
-    height: 100vh;
-    display: grid;
-    grid-template-columns: 2fr 3fr;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #121212;
+  color: #e0e0e0;
+  width: 100%;
+  overflow-x: hidden; /* Prevent horizontal scroll */
   
-    .left-container {
-      background-color: rgb(23, 23, 23);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-  
-        .items-container {
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
+  /* Header styling */
+  .main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1a1a1a;
+    padding: 0.8rem 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    width: 100%;
+    box-sizing: border-box; /* Include padding in width */
     
-            img {
-            width: 100px;
-            }
-
-            h2 {
-                color: rgb(184, 186, 190);
-            }
-            
-            button {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-shadow: 2px 2px 5px rgb(74, 74, 74);
-                cursor: pointer;
-                height: 50px;
-                width: 90%;
-                border-radius: 25px;
-                border: none;
-                transition-duration: 0.5s;
-                font-size: 20px;
-            }
-            
-            
-            button:hover {
-                outline: 4px solid white;
-            }
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+      
+      &:hover {
+        transform: scale(1.05);
       }
-  }
+      
+      img.logo {
+        height: 40px;
+        width: 40px;
+        border-radius: 50%;
+      }
+      
+      .logo-text {
+        color: #00b8a2;
+        font-weight: bold;
+        font-size: 1.2rem;
+        
+        @media (max-width: 500px) {
+          display: none; /* Hide text on very small screens */
+        }
+      }
+    }
+    
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      
+      a {
+        color: #00b8a2;
+        text-decoration: none;
+        font-weight: 500;
+        padding: 6px 12px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+        position: relative;
+        
+        &:hover, &.active {
+          background-color: rgba(0, 184, 162, 0.1);
+          
+          &:after {
+            transform: scaleX(1);
+          }
+        }
+        
+        &:after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 2px;
+          background-color: #00b8a2;
+          transform: scaleX(0);
+          transition: transform 0.3s ease;
+        }
+        
+        &.active:after {
+          transform: scaleX(1);
+        }
+      }
+      
+      @media (max-width: 768px) {
+        display: none;
+        
+        &.open {
+          display: flex;
+          position: absolute;
+          top: 100%;
+          right: 0;
+          flex-direction: column;
+          background-color: #1a1a1a;
+          width: 200px;
+          padding: 1rem;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+      }
+    }
   }
   
+  /* Main content container */
+  .content-container {
+    flex: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px; /* Space between welcome section and workspaces */
+    box-sizing: border-box; /* Include padding in width */
+    
+    /* For smooth scrolling */
+    scroll-behavior: smooth;
+    
+    @media (max-width: 768px) {
+      padding: 16px;
+    }
+  }
+  
+  .welcome-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    padding: 32px;
+    background-color: #1e1e1e;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    min-height: calc(100vh - 150px); /* Take up most of the viewport height */
+    
+    @media (max-width: 768px) {
+      flex-direction: column;
+      padding: 24px;
+      min-height: auto;
+    }
+    
+    .welcome-text {
+      flex: 2;
+      max-width: 600px;
+      padding: 0 24px;
+      
+      h1 {
+        font-size: 34px;
+        margin-bottom: 16px;
+        color: white;
+        
+        span {
+          color: #00b8a2;
+        }
+        
+        @media (max-width: 768px) {
+          font-size: 28px;
+        }
+      }
+      
+      p {
+        font-size: 16px;
+        line-height: 1.6;
+        color: #aaaaaa;
+        margin-bottom: 24px;
+      }
+    }
+    
+    .welcome-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: flex-start; /* Change from center to flex-start */
+      
+      @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 12px;
+      }
+    }
+    
+    .welcome-image {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 24px;
+      
+      @media (max-width: 768px) {
+        margin-top: 24px;
+      }
+      
+      img {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        box-shadow: 0 0 20px rgba(0, 184, 162, 0.3);
+        transition: transform 0.3s ease;
+        
+        &:hover {
+          transform: scale(1.1);
+          box-shadow: 0 0 30px rgba(0, 184, 162, 0.5);
+        }
+      }
+    }
+  }
+  
+  /* Workspaces section container */
+  #workspaces-section {
+    min-height: 100vh; /* Take up full viewport height */
+    scroll-margin-top: 70px; /* Add some space when scrolling to this section */
+    width: 100%;
+    box-sizing: border-box; /* Include padding in width */
+  }
+  
+  /* Button styles - keeping them from your existing code */
+  .btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+    
+    .material-icons {
+      font-size: 18px;
+    }
+    
+    &.btn-primary {
+      background-color: #2a5d3a;
+      color: white;
+      
+      &:hover {
+        background-color: #3a6d4a;
+        transform: translateY(-2px);
+      }
+    }
+    
+    &.btn-secondary {
+      background-color: #2a3d3a;
+      color: #00b8a2;
+      
+      &:hover {
+        background-color: #3a4d4a;
+        transform: translateY(-2px);
+      }
+    }
+    
+    &.btn-outline {
+      background-color: transparent;
+      color: #00b8a2;
+      border: 1px solid #00b8a2;
+      
+      &:hover {
+        background-color: rgba(0, 184, 162, 0.1);
+        transform: translateY(-2px);
+      }
+    }
+  }
+}
+
+/* For smooth scrolling on the entire page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Fix for horizontal scrollbar */
+body {
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  width: 100%;
+}

@@ -7,6 +7,33 @@
   border-radius: 6px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  /* Add transition for smooth fullscreen toggle */
+  transition: all 0.3s ease-in-out;
+
+     /* Fullscreen class */
+  &.fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 1000 !important;
+    border-radius: 0 !important;
+    
+    .editor-body {
+      /* Adjust editor body to fill the available space in fullscreen */
+      flex: 1 !important;
+      height: auto !important;
+      max-height: none !important;
+    }
+  }
+
+  &.animating {
+    /* Special styling for animation state */
+    border: 1px solid rgba(0, 184, 162, 0.3);
+  }
 
   .revert-button {
     background-color: #4a2a3d; /* Dark purple-ish background */
@@ -26,6 +53,20 @@
     /* Add a subtle indicator for the active state */
     &.active {
       box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.5);
+    }
+    
+    /* Disabled state */
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      background-color: #3a1a2d !important;
+      color: #bb5555 !important;
+      transform: none !important;
+      
+      &:hover {
+        background-color: #3a1a2d !important;
+        transform: none !important;
+      }
     }
   }
 
@@ -57,6 +98,32 @@
       border-radius: 4px;
       cursor: pointer;
       transition: all 0.3s ease;
+      
+      /* Disabled state styling */
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+        
+        &:hover {
+          background-color: inherit;
+          transform: none !important;
+        }
+      }
+    }
+
+    /* Add styling for saved button state */
+    .saved-button {
+      background-color: #2a5d3a !important; /* Green background for saved state */
+      color: #66ff99 !important;
+      
+      &:hover {
+        background-color: #3a6d4a !important;
+      }
+      
+      .material-icons {
+        color: #66ff99;
+      }
     }
 
     select {
@@ -69,6 +136,11 @@
       background-position: right 8px center;
       background-size: 10px;
       min-width: 120px;
+      
+      &:disabled {
+        opacity: 0.6;
+        background-color: #223330;
+      }
     }
 
     select:focus {
@@ -86,7 +158,7 @@
       white-space: nowrap;
     }
 
-    button:hover {
+    button:hover:not(:disabled) {
       background-color: #3a4d4a;
       transform: translateY(-2px);
     }
@@ -95,7 +167,7 @@
       background-color: #3a2a3d;
       color: #b800a2;
       
-      &:hover {
+      &:hover:not(:disabled) {
         background-color: #4a3a4d;
       }
       
@@ -103,8 +175,91 @@
       &.active {
         box-shadow: 0 0 0 2px rgba(184, 0, 162, 0.5);
       }
+      
+      /* Disabled state */
+      &:disabled {
+        background-color: #2a1a2d !important;
+        color: #8c0078 !important;
+      }
     }
   }
+
+  /* Add new styles for title editing */
+  .title-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      
+      .edit-title-icon {
+        opacity: 1;
+      }
+    }
+    
+    .title {
+      font-size: 1rem;
+      color: #e0e0e0;
+    }
+    
+    .edit-title-icon {
+      font-size: 16px;
+      opacity: 0;
+      color: #aaa;
+      transition: opacity 0.2s ease;
+    }
+  }
+  
+  .title-edit-container {
+    display: flex;
+    align-items: center;
+    background-color: #2a3d3a;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin-right: 12px;
+    
+    .title-input {
+      color: #e0e0e0;
+      background: transparent;
+      border: none;
+      font-size: 1rem;
+      font-weight: bold;
+      padding: 4px 8px;
+      min-width: 120px;
+      
+      &:focus {
+        outline: none;
+      }
+      
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+    
+    .save-title-btn {
+      cursor: pointer;
+      color: #00b8a2;
+      padding: 4px;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        background-color: rgba(0, 184, 162, 0.2);
+        transform: scale(1.1);
+      }
+      
+      &:active {
+        transform: scale(0.95);
+      }
+    }
+  }
+
 
   .editor-body {
     flex-grow: 1;
@@ -115,6 +270,24 @@
     
     /* Add a subtle transition effect when code changes */
     transition: background-color 0.3s ease;
+    
+    &.editing-animation {
+      position: relative;
+      
+      &:after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, 
+          rgba(0, 184, 162, 0.05) 0%, 
+          rgba(184, 0, 162, 0.05) 100%);
+        pointer-events: none;
+        z-index: 10;
+      }
+    }
     
     @media (max-width: 768px) {
       /* Adjust for mobile to ensure footer visibility */
@@ -155,6 +328,10 @@
         font-size: 16px;
         font-weight: bold;
         background-color: #2a7d3a;
+        
+        &:disabled {
+          background-color: #204d2a !important;
+        }
       }
     }
     
@@ -175,21 +352,36 @@
         font-size: 16px;
       }
       
-      &:hover {
+      &:hover:not(:disabled) {
         background-color: #3a4d4a;
         transform: translateY(-2px);
       }
       
-      &:active {
+      &:active:not(:disabled) {
         transform: translateY(0);
+      }
+      
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      
+      &.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        pointer-events: none;
       }
     }
 
     .btn:last-child {
       background-color: #2a5d3a;
       
-      &:hover {
+      &:hover:not(:disabled) {
         background-color: #3a6d4a;
+      }
+      
+      &:disabled {
+        background-color: #204d2a !important;
       }
     }
   }
@@ -222,5 +414,24 @@
     @media (max-width: 768px) {
       margin-top: 8px;
     }
+  }
+}
+
+/* Add styles for error notifications */
+.save-notification.error {
+  background-color: #5d2a2a !important;
+  color: #ff9999 !important;
+}
+
+/* Animation for saved success indicator */
+@keyframes save-success {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
   }
 }

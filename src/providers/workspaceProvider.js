@@ -120,6 +120,24 @@ export const WorkspaceProvider = ({ children }) => {
     setFolders(copiedFolders);
   };
 
+  // New function to get the file title 
+  const getFileTitle = (fileId, folderId) => {
+    if (!fileId || !folderId) return null;
+    
+    for (let i = 0; i < folders.length; i++) {
+      if (folders[i].id === folderId) {
+        const files = folders[i].files;
+        for (let j = 0; j < files.length; j++) {
+          if (files[j].id === fileId) {
+            return files[j].title;
+          }
+        }
+      }
+    }
+    
+    return null;
+  };
+
   const deleteFile = (folderId, fileId) => {
     const copiedFolders = [...folders];
     for (let i = 0; i < copiedFolders.length; i++) {
@@ -237,7 +255,8 @@ export const WorkspaceProvider = ({ children }) => {
     getDefaultCode,
     getLanguage,
     updateLanguage,
-    saveCode
+    saveCode,
+    getFileTitle
     
   };
 

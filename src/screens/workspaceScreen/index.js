@@ -4,6 +4,8 @@ import "./WSindex.scss";
 import { EditorContainer } from "./editorContainer";
 import { makeSubmission } from "./service";
 import { parseAIResponse } from "./parseAiResponse";
+import { WorkspaceContext, defaultCodes } from "../../providers/workspaceProvider";
+import { useContext } from "react";
 
 // ResizeObserver error prevention
 const debounce = (fn, delay) => {
@@ -41,10 +43,85 @@ window.addEventListener('unhandledrejection', event => {
   }
 });
 
+/**
+ * Enhanced animation that maintains indentation and structure better
+ * @param {Object} editor - Monaco editor instance
+ * @param {string} code - Target code to be typed
+ * @param {number} speed - Typing speed (lower is faster)
+ * @returns {Promise} Promise that resolves when animation is complete
+ */
+export const animateCodeTypingEnhanced = (editor, code, speed = 15) => {
+  return new Promise((resolve) => {
+    // Split target code into lines
+    const targetLines = code.split('\n');
+    
+    // Clear the editor
+    editor.setValue('');
+    
+    let currentLineIndex = 0;
+    
+    // Function to type the next line
+    const typeNextLine = () => {
+      // If we've completed all lines, resolve the promise
+      if (currentLineIndex >= targetLines.length) {
+        resolve();
+        return;
+      }
+      
+      // Get the current line we're working with
+      const currentLine = targetLines[currentLineIndex];
+      
+      // Determine indentation (leading whitespace)
+      const indentation = currentLine.match(/^(\s*)/)[0];
+      const content = currentLine.substring(indentation.length);
+      
+      // First add the indentation instantly (no animation)
+      const currentContent = editor.getValue();
+      editor.setValue(
+        currentContent + 
+        (currentLineIndex > 0 ? '\n' : '') + 
+        indentation
+      );
+      
+      // Then animate typing the content of the line
+      let contentIndex = 0;
+      
+      const typeContent = () => {
+        if (contentIndex >= content.length) {
+          // Move to next line
+          currentLineIndex++;
+          setTimeout(typeNextLine, speed * 2); // Pause between lines
+          return;
+        }
+        
+        // Add the next character
+        editor.setValue(
+          editor.getValue() + content[contentIndex]
+        );
+        
+        contentIndex++;
+        
+        // Schedule the next character
+        setTimeout(typeContent, speed);
+      };
+      
+      // Start typing the content
+      typeContent();
+    };
+    
+    // Start the typing animation
+    typeNextLine();
+  });
+};
+
 export const WorkspaceScreen = () => {
   const params = useParams();
   const { fileId, folderId } = params;
   const navigate = useNavigate();
+  
+  // Get workspace context for saving and loading code
+  const workspaceContext = useContext(WorkspaceContext);
+  const { getDefaultCode, getLanguage } = workspaceContext;
 
   // For the nav menu (burger toggle)
   const [isNavOpen, setIsNavOpen] = useState(false);
@@ -59,11 +136,45 @@ export const WorkspaceScreen = () => {
   const [activeTab, setActiveTab] = useState("input");
   const [showLoader, setShowLoader] = useState(false);
   
-  // Code editor states
+  // Initialize language from context or default to cpp
+  const [language, setLanguage] = useState(() => {
+    try {
+      if (fileId && folderId) {
+        const fileLanguage = getLanguage(fileId, folderId);
+        return fileLanguage || "cpp"; // Default to cpp if no language found
+      }
+    } catch (error) {
+      console.error("Error getting language:", error);
+    }
+    return "cpp"; // Default language if not found
+  });
+  
+  // Get the initial code - prioritize saved code, fall back to language default
   const [code, setCode] = useState(() => {
-    // You should get default code from your context/service here
-    // This is a placeholder
-    return "// Your code here";
+    try {
+      if (fileId && folderId) {
+        // First try to get saved code
+        const savedCode = getDefaultCode(fileId, folderId);
+        
+        if (savedCode) {
+          console.log("Loading saved code");
+          return savedCode;
+        }
+        
+        // If no saved code, use language default
+        const fileLanguage = getLanguage(fileId, folderId);
+        if (fileLanguage && defaultCodes[fileLanguage]) {
+          console.log(`Loading default code for ${fileLanguage}`);
+          return defaultCodes[fileLanguage];
+        }
+      }
+    } catch (error) {
+      console.error("Error loading code:", error);
+    }
+    
+    // Last resort fallback - use default for current language
+    console.log(`Using fallback default code for ${language}`);
+    return defaultCodes[language] || "";
   });
   
   // Track original code and AI code versions
@@ -78,6 +189,26 @@ export const WorkspaceScreen = () => {
   
   // State to track if animation is in progress
   const [isAnimating, setIsAnimating] = useState(false);
+
+  // Check if file exists, if not navigate to home
+  useEffect(() => {
+    // Verify that the file exists
+    if (fileId && folderId) {
+      try {
+        const code = getDefaultCode(fileId, folderId);
+        const lang = getLanguage(fileId, folderId);
+        
+        // If both code and language are undefined, file doesn't exist
+        if (code === undefined && lang === undefined) {
+          console.warn("File not found, navigating to home");
+          navigate("/");
+        }
+      } catch (error) {
+        console.error("Error checking file existence:", error);
+        navigate("/");
+      }
+    }
+  }, [fileId, folderId, navigate, getDefaultCode, getLanguage]);
 
   // Handle window resize for responsive layout
   useEffect(() => {
@@ -264,14 +395,13 @@ export const WorkspaceScreen = () => {
       setOriginalCode(currentCode);
       setIsViewingOriginalCode(true);
     } else {
-      // Save both versions and update to AI code
+      // Save both versions but don't update code yet (we'll animate it)
       if (originalCode === null) {
         setOriginalCode(currentCode);
       }
       
+      // Only store the AI code, but don't apply it yet
       setAiCode(newAiCode);
-      setCode(newAiCode);
-      setIsViewingOriginalCode(false);
     }
   };
 
@@ -298,14 +428,67 @@ export const WorkspaceScreen = () => {
         // Update the AI suggestions tab with verbal feedback only
         setAiSuggestions(feedback);
         
-        // If code was found in the response, update the editor
-        if (extractedCode) {
-          updateCodeFromAI(userCode, extractedCode);
+        // If code was found in the response, animate and update the editor
+        if (extractedCode && editorInstance) {
+          // Save the original code first if we haven't already
+          if (!originalCode) {
+            setOriginalCode(userCode);
+          }
           
-          // Show a notification that code has been updated
+          // Store the AI code for later toggling
+          setAiCode(extractedCode);
+          
+          // Set animation state to true
+          setIsAnimating(true);
+          
+          try {
+            // Show notification that we're applying AI suggestions
+            const notification = document.createElement("div");
+            notification.className = "save-notification ai-update";
+            notification.textContent = "Applying AI suggestions...";
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+              notification.classList.add("fade-out");
+              setTimeout(() => document.body.removeChild(notification), 500);
+            }, 1000);
+            
+            // Set the state to indicate we're viewing AI code
+            setIsViewingOriginalCode(false);
+            
+            // Wait a brief moment for the UI to update
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Begin the animation
+            await animateCodeTypingEnhanced(editorInstance, extractedCode);
+            
+            // After animation completes, update the state
+            setCode(extractedCode);
+            
+            // Show a notification that animation is complete
+            const completionNotification = document.createElement("div");
+            completionNotification.className = "save-notification ai-update";
+            completionNotification.textContent = "AI code applied";
+            document.body.appendChild(completionNotification);
+            
+            setTimeout(() => {
+              completionNotification.classList.add("fade-out");
+              setTimeout(() => document.body.removeChild(completionNotification), 500);
+            }, 2000);
+          } catch (error) {
+            console.error("Animation error:", error);
+            
+            // If animation fails, just update the code directly
+            setCode(extractedCode);
+          } finally {
+            // Reset animation state
+            setIsAnimating(false);
+          }
+        } else {
+          // If no code was extracted, just show a notification
           const notification = document.createElement("div");
-          notification.className = "save-notification ai-update";
-          notification.textContent = "Code updated with AI suggestions";
+          notification.className = "save-notification";
+          notification.textContent = "AI provided feedback but no code changes";
           document.body.appendChild(notification);
           
           setTimeout(() => {
@@ -463,19 +646,7 @@ export const WorkspaceScreen = () => {
               <div className="ai-suggestions-container">
                 <div className="output-header">
                   <b>AI Suggestions:</b>
-                  {originalCode && aiCode && !isAnimating && (
-                    <button className="icon-container" onClick={() => {
-                      setActiveTab("input");
-                      // If we're looking at original code, show AI code when clicking "View..."
-                      // and vice versa - ensure we're always toggling to the other version
-                      if (isViewingOriginalCode !== false) {
-                        toggleCodeVersion();
-                      }
-                    }}>
-                      <span className="material-icons">code</span>
-                      <b>View {isViewingOriginalCode ? 'AI' : 'Original'} Code</b>
-                    </button>
-                  )}
+                  
                 </div>
                 <textarea
                   readOnly
@@ -494,6 +665,7 @@ export const WorkspaceScreen = () => {
         </div>
       )}
       
+      {/* Animation in progress indicator */}
       {isAnimating && (
         <div className="animation-in-progress">
           <div className="animation-indicator"></div>
@@ -501,75 +673,4 @@ export const WorkspaceScreen = () => {
       )}
     </div>
   );
-};
-
-/**
- * Enhanced animation that maintains indentation and structure better
- * @param {Object} editor - Monaco editor instance
- * @param {string} code - Target code to be typed
- * @param {number} speed - Typing speed (lower is faster)
- * @returns {Promise} Promise that resolves when animation is complete
- */
-export const animateCodeTypingEnhanced = (editor, code, speed = 15) => {
-  return new Promise((resolve) => {
-    // Split target code into lines
-    const targetLines = code.split('\n');
-    
-    // Clear the editor
-    editor.setValue('');
-    
-    let currentLineIndex = 0;
-    
-    // Function to type the next line
-    const typeNextLine = () => {
-      // If we've completed all lines, resolve the promise
-      if (currentLineIndex >= targetLines.length) {
-        resolve();
-        return;
-      }
-      
-      // Get the current line we're working with
-      const currentLine = targetLines[currentLineIndex];
-      
-      // Determine indentation (leading whitespace)
-      const indentation = currentLine.match(/^(\s*)/)[0];
-      const content = currentLine.substring(indentation.length);
-      
-      // First add the indentation instantly (no animation)
-      const currentContent = editor.getValue();
-      editor.setValue(
-        currentContent + 
-        (currentLineIndex > 0 ? '\n' : '') + 
-        indentation
-      );
-      
-      // Then animate typing the content of the line
-      let contentIndex = 0;
-      
-      const typeContent = () => {
-        if (contentIndex >= content.length) {
-          // Move to next line
-          currentLineIndex++;
-          setTimeout(typeNextLine, speed * 2); // Pause between lines
-          return;
-        }
-        
-        // Add the next character
-        editor.setValue(
-          editor.getValue() + content[contentIndex]
-        );
-        
-        contentIndex++;
-        
-        // Schedule the next character
-        setTimeout(typeContent, speed);
-      };
-      
-      // Start typing the content
-      typeContent();
-    };
-    
-    // Start the typing animation
-    typeNextLine();
-  });
 };

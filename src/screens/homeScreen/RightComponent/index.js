@@ -4,53 +4,64 @@ import "./index.scss";
 import { modalConstants, ModalContext } from "../../../providers/modalProvider";
 import { useNavigate } from "react-router-dom";
 
-const Folder = ({ folderTitle, cards, folderId }) => {
+const FileItem = ({ file, folderId, onEditFile, onDeleteFile, onClick }) => {
+  return (
+    <div className="file-item" onClick={onClick}>
+      <div className="file-icon">
+        <span className="material-icons">code</span>
+      </div>
+      <div className="file-info">
+        <div className="file-name">{file.title}</div>
+        <div className="file-language">Language: {file.language}</div>
+      </div>
+      <div className="file-actions">
+        <span className="material-icons" onClick={(e) => {
+          e.stopPropagation();
+          onEditFile();
+        }}>
+          edit
+        </span>
+        <span className="material-icons" onClick={(e) => {
+          e.stopPropagation();
+          onDeleteFile();
+        }}>
+          delete
+        </span>
+      </div>
+    </div>
+  );
+};
+
+const WorkspaceCard = ({ folder, folderId }) => {
   const { deleteFolder, deleteFile } = useContext(WorkspaceContext);
   const { openModal, setModalPayload } = useContext(ModalContext);
   const navigate = useNavigate();
 
-  const onDeleteFolder = () => {
+  const onDeleteFolder = (e) => {
+    e.stopPropagation();
     deleteFolder(folderId);
   };
 
-  const onUpdateFolderTitle = () => {
+  const onUpdateFolderTitle = (e) => {
+    e.stopPropagation();
     setModalPayload(folderId);
     openModal(modalConstants.UPDATE_FOLDER_TITLE);
   };
 
-  const openNewCardModal = () => {
+  const openNewCardModal = (e) => {
+    e.stopPropagation();
     setModalPayload(folderId);
     openModal(modalConstants.CREATE_NEW_CARD);
   };
-  
 
   return (
-    <div className="folder-container">
-      <div className="folder-header">
-        <div className="folder-header-item">
-          <span className="material-icons" style={{ color: "#FFCA29" }}>
-            folder
-          </span>
-          <span>{folderTitle}</span>
-        </div>
-
-        <div className="folder-header-item">
-          <span className="material-icons" onClick={onDeleteFolder}>
-            delete
-          </span>
-          <span className="material-icons" onClick={onUpdateFolderTitle}>
-            edit
-          </span>
-
-          <span className="material-icons" onClick={openNewCardModal}>
-            add
-          </span>
-        </div>
+    <div className="workspace-card">
+      <div className="workspace-header">
+        <span className="material-icons folder-icon">folder</span>
+        <span className="workspace-title">{folder.title}</span>
       </div>
-
-      <div className="cards-container">
-        {cards?.map((file, index) => {
-
+      <div className="workspace-files">
+        {folder.files?.map((file) => {
           const onEditFile = () => {
             setModalPayload({ fileId: file.id, folderId: folderId });
             openModal(modalConstants.UPDATE_FILE_TITLE);
@@ -58,33 +69,34 @@ const Folder = ({ folderTitle, cards, folderId }) => {
 
           const onDeleteFile = () => {
             deleteFile(folderId, file.id);
-          }
+          };
 
           const navigateToWorkspaceScreen = () => {
-            // TODO: navigate to next screen by passing the fileId and folderId
             navigate(`/workspace/${file.id}/${folderId}`);
           };
-          
-          
 
           return (
-            <div className="card" key={index} onClick = {navigateToWorkspaceScreen}>
-              <img src="BFlogo.png" />
-              <div className="title-container">
-                <span>{file?.title}</span>
-                <span>Language: {file?.language}</span>
-              </div>
-              <div style={{ display: "flex", gap: "10px" }}>
-                <span className="material-icons" onClick = {onDeleteFile}>
-                  delete
-                </span>
-                <span className="material-icons" onClick={onEditFile}>
-                  edit
-                </span>
-              </div>
-            </div>
+            <FileItem
+              key={file.id}
+              file={file}
+              folderId={folderId}
+              onEditFile={onEditFile}
+              onDeleteFile={onDeleteFile}
+              onClick={navigateToWorkspaceScreen}
+            />
           );
         })}
+      </div>
+      <div className="card-actions">
+        <button onClick={onUpdateFolderTitle}>
+          <span className="material-icons">edit</span>
+        </button>
+        <button onClick={onDeleteFolder}>
+          <span className="material-icons">delete</span>
+        </button>
+        <button onClick={openNewCardModal}>
+          <span className="material-icons">add</span>
+        </button>
       </div>
     </div>
   );
@@ -94,27 +106,33 @@ export const RightComponent = () => {
   const { folders } = useContext(WorkspaceContext);
   const modalFeatures = useContext(ModalContext);
 
-  // const openCreateNewFolderModal = () => {
-  //   modalFeatures.openModal(modalFeatures.CREATE_FOLDER);
-  // }
+  const openCreateWorkspaceModal = () => {
+    modalFeatures.openModal(modalConstants.CREATE_WORKSPACE);
+  };
 
   return (
-    <div className="right-container">
-      <div className="header">
-        <div className="title">
-          <span>My</span> Workspace
-        </div>
+    <section className="workspace-section">
+      <div className="section-header">
+        <h2 className="section-title">
+          <span className="highlight">My</span> Workspaces
+        </h2>
+        <button 
+          className="create-workspace-btn" 
+          onClick={openCreateWorkspaceModal}
+        >
+          <span className="material-icons">add</span>
+          Create Workspace
+        </button>
       </div>
-      {folders?.map((folder, index) => {
-        return (
-          <Folder
-            folderTitle={folder?.title}
-            cards={folder?.files}
+      <div className="workspace-grid">
+        {folders?.map((folder) => (
+          <WorkspaceCard
             key={folder.id}
+            folder={folder}
             folderId={folder.id}
           />
-        );
-      })}
-    </div>
+        ))}
+      </div>
+    </section>
   );
 };
