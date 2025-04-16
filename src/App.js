@@ -7,6 +7,8 @@ import { ModalProvider } from "./providers/modalProvider";
 import { AuthProvider } from "./providers/authProvider";
 import SyncNotification from "./components/SyncNotification";
 
+import { AccountScreen } from "./screens/accountScreen";
+
 function App() {
   return (
     <AuthProvider>
@@ -17,6 +19,7 @@ function App() {
               <Route path="/" element={<HomeScreen />} />
               <Route path="/workspace/:fileId/:folderId" element={<WorkspaceScreen />} />
               <Route path="/auth" element={<AuthScreen />} />
+              <Route path="/account" element={<AccountScreen />} />
             </Routes>
             <SyncNotification />
           </BrowserRouter>

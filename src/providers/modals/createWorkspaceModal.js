@@ -5,7 +5,6 @@ import { WorkspaceContext } from "../workspaceProvider";
 
 export const CreateWorkspaceModal = () => {
   const modalFeatures = useContext(ModalContext);
-
   const workspaceFeatures = useContext(WorkspaceContext);
 
   const closeModal = () => {
@@ -21,11 +20,9 @@ export const CreateWorkspaceModal = () => {
         folderName,
         fileName,
         language
-    })
+    });
     closeModal();
-        
   };
-  
 
   return (
     <div className="modal-container">
@@ -36,27 +33,34 @@ export const CreateWorkspaceModal = () => {
         <h1>Create New Workspace</h1>
 
         <div className="item">
-          <p>Enter folder Name</p>
-          <input name="folderName" required />
+          <p>Workspace Name</p>
+          <input 
+            name="folderName" 
+            placeholder="Enter workspace name" 
+            required 
+          />
         </div>
 
         <div className="item">
-          <p>Enter card name</p>
-          <input name="fileName" required/>
+          <p>File Name</p>
+          <input 
+            name="fileName" 
+            placeholder="Enter file name" 
+            required
+          />
         </div>
 
         <div className="item">
+          <p>Programming Language</p>
           <select name="language" required>
-            <option value="cpp">CPP</option>
+            <option value="cpp">C++</option>
             <option value="java">Java</option>
             <option value="javascript">JavaScript</option>
             <option value="python">Python</option>
           </select>
-
-          <button type="submit">Create Workspace</button>
         </div>
 
-        
+        <button type="submit">Create Workspace</button>
       </form>
     </div>
   );

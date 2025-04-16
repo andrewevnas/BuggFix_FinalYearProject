@@ -5,22 +5,23 @@ import { RightComponent } from "./RightComponent";
 import { Modal } from "../../providers/modals/modal";
 import { WelcomeSection } from "./welcomeSection";
 import { AuthContext } from "../../providers/authProvider";
+import { Link } from "react-router-dom";
 
 export const HomeScreen = () => {
   const modalFeatures = useContext(ModalContext);
   const { isAuthenticated, currentUser, logout } = useContext(AuthContext);
 
   // In HomeScreen.js
-const openCreateWorkspaceModal = () => {
-  console.log("Create workspace clicked, authenticated:", isAuthenticated());
-  if (isAuthenticated()) {
-    // If logged in, directly open the workspace creation modal
-    modalFeatures.openModal(modalConstants.CREATE_WORKSPACE);
-  } else {
-    // If not logged in, show the auth options modal
-    modalFeatures.openModal(modalConstants.AUTH_OPTIONS);
-  }
-};
+  const openCreateWorkspaceModal = () => {
+    console.log("Create workspace clicked, authenticated:", isAuthenticated());
+    if (isAuthenticated()) {
+      // If logged in, directly open the workspace creation modal
+      modalFeatures.openModal(modalConstants.CREATE_WORKSPACE);
+    } else {
+      // If not logged in, show the auth options modal
+      modalFeatures.openModal(modalConstants.AUTH_OPTIONS);
+    }
+  };
 
   // Function to scroll to workspaces section
   const scrollToWorkspaces = (e) => {
@@ -40,18 +41,20 @@ const openCreateWorkspaceModal = () => {
         </div>
 
         <nav className="nav-links">
-          
           <a href="#workspaces" onClick={scrollToWorkspaces}>
             Workspaces
           </a>
           
-          <div className="nav-links">
+          <div className="auth-buttons">
             {isAuthenticated() ? (
               <>
-                <button >
-                  Hi, {currentUser.displayName} !
-                </button>
-                <button onClick={logout} className="auth-btn logout-btn">
+                <Link to="/account" className="user-greeting">
+                  <div className="user-avatar">
+                    {currentUser.displayName.charAt(0).toUpperCase()}
+                  </div>
+                  <span>Hi, {currentUser.displayName}</span>
+                </Link>
+                <button onClick={logout} className="logout-btn">
                   <span className="material-icons">logout</span>
                   Logout
                 </button>
@@ -64,7 +67,7 @@ const openCreateWorkspaceModal = () => {
           </div>
         </nav>
       </header>
-      
+
       {/* Main content container */}
       <div className="content-container">
         {/* Welcome section */}

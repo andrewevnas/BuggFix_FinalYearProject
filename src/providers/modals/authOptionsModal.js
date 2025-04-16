@@ -40,7 +40,8 @@ export const AuthOptionsModal = () => {
           close
         </span>
         <h1>Save Your Workspaces</h1>
-        <p>Creating an account allows you to access your workspaces from anywhere.</p>
+        
+        <p>Creating an account allows you to access your workspaces from anywhere and sync your changes across devices.</p>
 
         <div className="auth-options">
           <button className="auth-btn" onClick={handleLogin}>

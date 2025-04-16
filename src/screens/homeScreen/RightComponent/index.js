@@ -116,6 +116,7 @@ export const RightComponent = () => {
         <h2 className="section-title">
           <span className="highlight">My</span> Workspaces
         </h2>
+
         <button 
           className="create-workspace-btn" 
           onClick={openCreateWorkspaceModal}
@@ -124,15 +125,31 @@ export const RightComponent = () => {
           Create Workspace
         </button>
       </div>
-      <div className="workspace-grid">
-        {folders?.map((folder) => (
-          <WorkspaceCard
-            key={folder.id}
-            folder={folder}
-            folderId={folder.id}
-          />
-        ))}
-      </div>
+      
+      {folders && folders.length > 0 ? (
+        <div className="workspace-grid">
+          {folders.map((folder) => (
+            <WorkspaceCard
+              key={folder.id}
+              folder={folder}
+              folderId={folder.id}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="empty-workspaces">
+          <div className="empty-content">
+            <span className="material-icons">folder_open</span>
+            <h3>No workspaces yet</h3>
+            <p>Your workspaces will appear here. Click the button below to get started!</p>
+            <button className="create-workspace-btn" onClick={openCreateWorkspaceModal}>
+              <span className="material-icons">add</span>
+              Create Workspace
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 };
+

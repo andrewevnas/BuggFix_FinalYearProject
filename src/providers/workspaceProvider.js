@@ -164,8 +164,8 @@ export const WorkspaceProvider = ({ children }) => {
       // Use provided folders or current state
       const foldersData = foldersToSync || folders;
       
-      await axios.put(
-        `${API_URL}/workspaces/sync`, 
+      await axios.post(
+        `${API_URL}/workspaces`,
         { folders: foldersData },
         { headers: getAuthHeader() }
       );
@@ -186,56 +186,112 @@ export const WorkspaceProvider = ({ children }) => {
     }
   };
 
-  // Update the folders and sync if authenticated
-  const updateAndSync = async (updatedFolders) => {
-    // Update local state and storage
-    setFolders(updatedFolders);
-    localStorage.setItem("data", JSON.stringify(updatedFolders));
-    
-    // Sync to cloud if authenticated
-    if (isAuthenticated()) {
-      try {
-        await axios.put(
-          `${API_URL}/workspaces/sync`,
-          { folders: updatedFolders },
-          { headers: getAuthHeader() }
-        );
-      } catch (error) {
-        console.error("Error syncing to cloud:", error);
-        setSyncMessage({
-          type: 'warning',
-          text: 'Changes saved locally but not synced to cloud'
-        });
-      }
-    }
-  };
-
-  // MODIFY ALL EXISTING CRUD OPERATIONS TO USE updateAndSync
-  
+  // DELETE FOLDER - Using the same pattern as createNewWorkspace
   const deleteFolder = async (id) => {
+    console.log("Deleting folder with ID:", id);
+    
+    // Create updated list without the deleted folder
     const updatedFoldersList = folders.filter((folderItem) => {
       return folderItem.id !== id;
     });
-  
-    await updateAndSync(updatedFoldersList);
+    
+    // Update local state immediately for responsive UI
+    setFolders(updatedFoldersList);
+    
+    // Update localStorage
+    localStorage.setItem("data", JSON.stringify(updatedFoldersList));
+    
+    // If authenticated, sync to cloud using the same method as createNewWorkspace
+    if (isAuthenticated()) {
+      try {
+        console.log("Syncing folder deletion to cloud");
+        await axios.post(
+          `${API_URL}/workspaces`,
+          { folders: updatedFoldersList },
+          { headers: getAuthHeader() }
+        );
+        
+        setSyncMessage({
+          type: 'success',
+          text: 'Folder deleted and synced to cloud'
+        });
+      } catch (error) {
+        console.error("Error syncing folder deletion:", error);
+        setSyncMessage({
+          type: 'warning',
+          text: 'Folder deleted locally but not synced to cloud'
+        });
+      }
+    } else {
+      setSyncMessage({
+        type: 'info',
+        text: 'Folder deleted locally. Log in to sync changes.'
+      });
+    }
+    
+    return true;
   };
 
+  // EDIT FOLDER TITLE - Using the same pattern
   const editFolderTitle = async (newFolderName, id) => {
+    console.log("Editing folder title:", id, "to", newFolderName);
+    
+    // Create updated folders list with new title
     const updatedFoldersList = folders.map((folderItem) => {
       if (folderItem.id === id) {
         return { ...folderItem, title: newFolderName };
       }
       return folderItem;
     });
-  
-    await updateAndSync(updatedFoldersList);
+    
+    // Update local state immediately
+    setFolders(updatedFoldersList);
+    
+    // Update localStorage
+    localStorage.setItem("data", JSON.stringify(updatedFoldersList));
+    
+    // If authenticated, sync to cloud using the same method as createNewWorkspace
+    if (isAuthenticated()) {
+      try {
+        console.log("Syncing folder title update to cloud");
+        await axios.post(
+          `${API_URL}/workspaces`,
+          { folders: updatedFoldersList },
+          { headers: getAuthHeader() }
+        );
+        
+        setSyncMessage({
+          type: 'success',
+          text: 'Folder title updated and synced to cloud'
+        });
+      } catch (error) {
+        console.error("Error syncing folder title update:", error);
+        setSyncMessage({
+          type: 'warning',
+          text: 'Folder title updated locally but not synced to cloud'
+        });
+      }
+    } else {
+      setSyncMessage({
+        type: 'info',
+        text: 'Folder title updated locally. Log in to sync changes.'
+      });
+    }
+    
+    return true;
   };
 
+  // EDIT FILE TITLE - Using the same pattern
   const editFileTitle = async (newFileName, folderId, fileId) => {
-    const copiedFolders = [...folders];
-    for (let i = 0; i < copiedFolders.length; i++) {
-      if (folderId === copiedFolders[i].id) {
-        const files = copiedFolders[i].files;
+    console.log("Editing file title:", fileId, "in folder", folderId, "to", newFileName);
+    
+    // Create deep copy to avoid reference issues
+    const updatedFolders = JSON.parse(JSON.stringify(folders));
+    
+    // Find and update the file title
+    for (let i = 0; i < updatedFolders.length; i++) {
+      if (folderId === updatedFolders[i].id) {
+        const files = updatedFolders[i].files;
         for (let j = 0; j < files.length; j++) {
           if (files[j].id === fileId) {
             files[j].title = newFileName;
@@ -245,69 +301,260 @@ export const WorkspaceProvider = ({ children }) => {
         break;
       }
     }
-  
-    await updateAndSync(copiedFolders);
-  };
-
-  const deleteFile = async (folderId, fileId) => {
-    const copiedFolders = [...folders];
-    for (let i = 0; i < copiedFolders.length; i++) {
-      if (copiedFolders[i].id === folderId) {
-        const files = [...copiedFolders[i].files];
-        copiedFolders[i].files = files.filter((file) => {
-          return file.id !== fileId;
+    
+    // Update local state immediately
+    setFolders(updatedFolders);
+    
+    // Update localStorage
+    localStorage.setItem("data", JSON.stringify(updatedFolders));
+    
+    // If authenticated, sync to cloud using the same method as createNewWorkspace
+    if (isAuthenticated()) {
+      try {
+        console.log("Syncing file title update to cloud");
+        await axios.post(
+          `${API_URL}/workspaces`,
+          { folders: updatedFolders },
+          { headers: getAuthHeader() }
+        );
+        
+        setSyncMessage({
+          type: 'success',
+          text: 'File title updated and synced to cloud'
         });
+      } catch (error) {
+        console.error("Error syncing file title update:", error);
+        setSyncMessage({
+          type: 'warning',
+          text: 'File title updated locally but not synced to cloud'
+        });
+      }
+    } else {
+      setSyncMessage({
+        type: 'info',
+        text: 'File title updated locally. Log in to sync changes.'
+      });
+    }
+    
+    return true;
+  };
+
+  // DELETE FILE - Using the same pattern
+  const deleteFile = async (folderId, fileId) => {
+    console.log("Deleting file:", fileId, "from folder", folderId);
+    
+    // Create deep copy to avoid reference issues
+    const updatedFolders = JSON.parse(JSON.stringify(folders));
+    
+    // Find and remove the file
+    for (let i = 0; i < updatedFolders.length; i++) {
+      if (updatedFolders[i].id === folderId) {
+        updatedFolders[i].files = updatedFolders[i].files.filter(file => file.id !== fileId);
         break;
       }
     }
-  
-    await updateAndSync(copiedFolders);
+    
+    // Update local state immediately
+    setFolders(updatedFolders);
+    
+    // Update localStorage
+    localStorage.setItem("data", JSON.stringify(updatedFolders));
+    
+    // If authenticated, sync to cloud using the same method as createNewWorkspace
+    if (isAuthenticated()) {
+      try {
+        console.log("Syncing file deletion to cloud");
+        await axios.post(
+          `${API_URL}/workspaces`,
+          { folders: updatedFolders },
+          { headers: getAuthHeader() }
+        );
+        
+        setSyncMessage({
+          type: 'success',
+          text: 'File deleted and synced to cloud'
+        });
+      } catch (error) {
+        console.error("Error syncing file deletion:", error);
+        setSyncMessage({
+          type: 'warning',
+          text: 'File deleted locally but not synced to cloud'
+        });
+      }
+    } else {
+      setSyncMessage({
+        type: 'info',
+        text: 'File deleted locally. Log in to sync changes.'
+      });
+    }
+    
+    return true;
   };
 
+  // CREATE NEW CARD - Using the same pattern
   const createNewCard = async (folderId, file) => {
-    const copiedFolders = [...folders];
-    for (let i = 0; i < copiedFolders.length; i++) {
-      if (copiedFolders[i].id === folderId) {
-        copiedFolders[i].files.push(file);
+    console.log("Creating new card in folder:", folderId);
+    
+    // Create deep copy to avoid reference issues
+    const updatedFolders = JSON.parse(JSON.stringify(folders));
+    
+    // Add the new file
+    for (let i = 0; i < updatedFolders.length; i++) {
+      if (updatedFolders[i].id === folderId) {
+        updatedFolders[i].files.push(file);
         break;
       }
     }
-  
-    await updateAndSync(copiedFolders);
+    
+    // Update local state immediately
+    setFolders(updatedFolders);
+    
+    // Update localStorage
+    localStorage.setItem("data", JSON.stringify(updatedFolders));
+    
+    // If authenticated, sync to cloud using the same method as createNewWorkspace
+    if (isAuthenticated()) {
+      try {
+        console.log("Syncing new card to cloud");
+        await axios.post(
+          `${API_URL}/workspaces`,
+          { folders: updatedFolders },
+          { headers: getAuthHeader() }
+        );
+        
+        setSyncMessage({
+          type: 'success',
+          text: 'New card created and synced to cloud'
+        });
+      } catch (error) {
+        console.error("Error syncing new card:", error);
+        setSyncMessage({
+          type: 'warning',
+          text: 'New card created locally but not synced to cloud'
+        });
+      }
+    } else {
+      setSyncMessage({
+        type: 'info',
+        text: 'New card created locally. Log in to sync changes.'
+      });
+    }
+    
+    return true;
   };
 
+  // UPDATE LANGUAGE - Using the same pattern
   const updateLanguage = async (fileId, folderId, language) => {
-    const newFolders = [...folders];
-    for (let i = 0; i < newFolders.length; i++) {
-      if (newFolders[i].id === folderId) {
-        for (let j = 0; j < newFolders[i].files.length; j++) {
-          const currentFile = newFolders[i].files[j];
+    console.log("Updating language for file:", fileId, "in folder", folderId, "to", language);
+    
+    // Create deep copy to avoid reference issues
+    const updatedFolders = JSON.parse(JSON.stringify(folders));
+    
+    // Find and update the file language
+    for (let i = 0; i < updatedFolders.length; i++) {
+      if (updatedFolders[i].id === folderId) {
+        for (let j = 0; j < updatedFolders[i].files.length; j++) {
+          const currentFile = updatedFolders[i].files[j];
           if (fileId === currentFile.id) {
-            newFolders[i].files[j].code = defaultCodes[language];
-            newFolders[i].files[j].language = language;
+            updatedFolders[i].files[j].code = defaultCodes[language];
+            updatedFolders[i].files[j].language = language;
           }
         }
       }
     }
-  
-    await updateAndSync(newFolders);
+    
+    // Update local state immediately
+    setFolders(updatedFolders);
+    
+    // Update localStorage
+    localStorage.setItem("data", JSON.stringify(updatedFolders));
+    
+    // If authenticated, sync to cloud using the same method as createNewWorkspace
+    if (isAuthenticated()) {
+      try {
+        console.log("Syncing language update to cloud");
+        await axios.post(
+          `${API_URL}/workspaces`,
+          { folders: updatedFolders },
+          { headers: getAuthHeader() }
+        );
+        
+        setSyncMessage({
+          type: 'success',
+          text: 'Language updated and synced to cloud'
+        });
+      } catch (error) {
+        console.error("Error syncing language update:", error);
+        setSyncMessage({
+          type: 'warning',
+          text: 'Language updated locally but not synced to cloud'
+        });
+      }
+    } else {
+      setSyncMessage({
+        type: 'info',
+        text: 'Language updated locally. Log in to sync changes.'
+      });
+    }
+    
+    return true;
   };
 
+  // SAVE CODE - Using the same pattern
   const saveCode = async (fileId, folderId, newCode) => {
-    const newFolders = [...folders];
-    for (let i = 0; i < newFolders.length; i++) {
-      if (newFolders[i].id === folderId) {
-        for (let j = 0; j < newFolders[i].files.length; j++) {
-          const currentFile = newFolders[i].files[j];
+    console.log("Saving code for file:", fileId, "in folder", folderId);
+    
+    // Create deep copy to avoid reference issues
+    const updatedFolders = JSON.parse(JSON.stringify(folders));
+    
+    // Find and update the code
+    for (let i = 0; i < updatedFolders.length; i++) {
+      if (updatedFolders[i].id === folderId) {
+        for (let j = 0; j < updatedFolders[i].files.length; j++) {
+          const currentFile = updatedFolders[i].files[j];
           if (fileId === currentFile.id) {
-            newFolders[i].files[j].code = newCode;
-            newFolders[i].files[j].lastEdited = new Date();
+            updatedFolders[i].files[j].code = newCode;
+            updatedFolders[i].files[j].lastEdited = new Date();
           }
         }
       }
     }
-  
-    await updateAndSync(newFolders);
+    
+    // Update local state immediately
+    setFolders(updatedFolders);
+    
+    // Update localStorage
+    localStorage.setItem("data", JSON.stringify(updatedFolders));
+    
+    // If authenticated, sync to cloud using the same method as createNewWorkspace
+    if (isAuthenticated()) {
+      try {
+        console.log("Syncing code update to cloud");
+        await axios.post(
+          `${API_URL}/workspaces`,
+          { folders: updatedFolders },
+          { headers: getAuthHeader() }
+        );
+        
+        setSyncMessage({
+          type: 'success',
+          text: 'Code saved and synced to cloud'
+        });
+      } catch (error) {
+        console.error("Error syncing code update:", error);
+        setSyncMessage({
+          type: 'warning',
+          text: 'Code saved locally but not synced to cloud'
+        });
+      }
+    } else {
+      setSyncMessage({
+        type: 'info',
+        text: 'Code saved locally. Log in to sync changes.'
+      });
+    }
+    
+    return true;
   };
 
   // Get functions that don't modify data

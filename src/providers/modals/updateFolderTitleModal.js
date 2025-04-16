@@ -18,40 +18,19 @@ export const UpdateFolderTitleModal = () => {
     <div className="modal-container">
       <form className="modal-body" onSubmit={onSubmitModal}>
         <span onClick={closeModal} className="material-icons close">close</span>
-        <h1>Update Folder title</h1>
-        <div style={inputBoxStyles.inputContainer}>
+        <h1>Update Workspace Name</h1>
+        
+        <div className="item">
+          <p>New Workspace Name</p>
           <input
             required
             name="folderName"
-            style={inputBoxStyles.input}
-            placeholder="Enter Folder Name"
+            placeholder="Enter new workspace name"
           />
-          <button style={inputBoxStyles.btn} type="submit">
-            Create Folder
-          </button>
         </div>
+        
+        <button type="submit">Update Workspace</button>
       </form>
     </div>
   );
-  
-  
 };
-
-export const inputBoxStyles = {
-  inputContainer: {
-    display: 'flex',
-    gap: 10,
-  },
-  input: {
-    flexGrow: 1,
-    padding: 10,
-  },
-  btn: {
-    backgroundColor: '#241F21',
-    border: 'none',
-    borderRadius: 4,
-    padding: '0px 10px',
-    color: 'white',
-  }
-}
-

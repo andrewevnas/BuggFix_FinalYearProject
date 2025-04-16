@@ -10,7 +10,7 @@
   /* Add transition for smooth fullscreen toggle */
   transition: all 0.3s ease-in-out;
 
-     /* Fullscreen class */
+  /* Fullscreen class */
   &.fullscreen {
     position: fixed !important;
     top: 0 !important;
@@ -76,11 +76,30 @@
     justify-content: space-between;
     padding: 0.5rem;
     border-bottom: 1px solid #333;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* Prevent wrapping by default */
+    height: 60px; /* Fixed height for consistency */
+    box-sizing: border-box;
+    overflow: visible; /* Allow dropdowns to be visible */
+    
+    /* Update layout for better spacing */
+    display: grid;
+    grid-template-columns: minmax(200px, 1fr) auto auto;
+    gap: 12px;
+    align-items: center;
+    
+    @media (max-width: 992px) {
+      /* Switch to 2x2 grid on medium screens */
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      height: auto;
+      padding: 8px;
+      gap: 8px;
+    }
     
     @media (max-width: 768px) {
-      flex-direction: column;
-      gap: 8px;
+      /* Stack on mobile */
+      grid-template-columns: 1fr;
+      grid-template-rows: repeat(4, auto);
     }
 
     .title {
@@ -88,6 +107,10 @@
       display: flex;
       align-items: center;
       color: #e0e0e0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
     }
 
     button,
@@ -98,6 +121,7 @@
       border-radius: 4px;
       cursor: pointer;
       transition: all 0.3s ease;
+      white-space: nowrap; /* Prevent text wrapping */
       
       /* Disabled state styling */
       &:disabled {
@@ -135,7 +159,8 @@
       background-repeat: no-repeat;
       background-position: right 8px center;
       background-size: 10px;
-      min-width: 120px;
+      min-width: 120px; /* Ensure minimum width */
+      max-width: 150px; /* Limit maximum width */
       
       &:disabled {
         opacity: 0.6;
@@ -156,6 +181,8 @@
       gap: 6px;
       font-weight: 500;
       white-space: nowrap;
+      min-width: 100px; /* Ensure minimum width */
+      justify-content: center;
     }
 
     button:hover:not(:disabled) {
@@ -393,9 +420,65 @@
     padding: 6px 10px;
     align-items: center;
     
+    /* Fixed width to ensure consistent layout */
+    &.editor-left-container {
+      justify-content: flex-start;
+    }
+    
+    &.editor-right-container {
+      justify-content: flex-end;
+    }
+    
+    @media (max-width: 992px) {
+      /* Adjust layout for medium screens */
+      &.editor-left-container {
+        grid-column: 1;
+        grid-row: 1;
+      }
+      
+      &.editor-right-container {
+        grid-column: 2;
+        grid-row: 1;
+      }
+      
+      /* Handle AI buttons on second row */
+      &.editor-left-container:nth-child(2) {
+        grid-column: 1;
+        grid-row: 2;
+      }
+      
+      &.editor-left-container:nth-child(3) {
+        grid-column: 2;
+        grid-row: 2;
+      }
+    }
+    
     @media (max-width: 768px) {
       justify-content: center;
       width: 100%;
+      padding: 6px 0;
+      
+      /* Stack all containers on mobile */
+      &.editor-left-container,
+      &.editor-right-container {
+        grid-column: 1;
+      }
+      
+      &.editor-left-container:first-child {
+        grid-row: 1;
+      }
+      
+      &.editor-left-container:nth-child(2) {
+        grid-row: 2;
+      }
+      
+      &.editor-left-container:nth-child(3) {
+        grid-row: 3;
+      }
+      
+      &.editor-right-container {
+        grid-row: 4;
+      }
     }
     
     .material-icons {
@@ -409,18 +492,18 @@
       }
     }
   }
-  
-  .editor-right-container {
-    @media (max-width: 768px) {
-      margin-top: 8px;
-    }
-  }
 }
 
 /* Add styles for error notifications */
 .save-notification.error {
   background-color: #5d2a2a !important;
   color: #ff9999 !important;
+}
+
+/* Add styles for warning notifications */
+.save-notification.warning {
+  background-color: #5d4a2a !important;
+  color: #ffcc99 !important;
 }
 
 /* Animation for saved success indicator */

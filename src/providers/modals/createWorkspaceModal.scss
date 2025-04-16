@@ -1,124 +1,186 @@
 .modal-container {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: rgba(153, 153, 153, 0.2);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  
-    .modal-body {
-      background-color: white;
-      padding: 50px;
-      
-      box-shadow: 4px 4px 10px gray;
-      border-radius: 10px;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-  
-        .item {
-            display: flex;
-            justify-content: space-between;
-            
-          
-            input,
-            select {
-              border: none;
-              background-color: #E7F0FE;
-              border-radius: 4px;
-              padding: 12px;
-            }
-          }
-
-          
-          
-          input:focus {
-            outline: none;
-          }
-          
-          button {
-            border: none;
-            padding: 10px;
-            background-color: dodgerblue;
-            color: white;
-            cursor: pointer;
-            border-radius: 5px;
-            transition-duration: 0.5s;
-          }
-          
-          button:hover {
-            background-color: blue;
-          }
-
-          .close {
-            cursor: pointer;
-            padding-top: 5px;
-            position: absolute;
-            top: 0;
-            right: 10px;
-          }
-          
-  
-      
-    }
-  }
-
-  // Add to your createWorkspaceModal.scss
-.auth-options {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin: 24px 0;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
   
-  .auth-btn {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    background-color: #2a5d3a;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    
-    &:hover {
-      background-color: #3a6d4a;
-      transform: translateY(-2px);
-    }
-    
-    .material-icons {
-      font-size: 20px;
-    }
-  }
-  
-  .guest-btn {
+  .modal-body {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    padding: 32px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    position: relative;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: 12px 16px;
-    background-color: transparent;
-    color: #00b8a2;
-    border: 1px solid #00b8a2;
-    border-radius: 4px;
-    margin-top: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    gap: 24px;
+    max-width: 450px;
+    width: 100%;
     
-    small {
-      color: #aaaaaa;
-      margin-top: 4px;
-      font-size: 12px;
+    h1 {
+      color: white;
+      font-size: 24px;
+      margin: 0;
+      text-align: center;
     }
     
-    &:hover {
-      background-color: rgba(0, 184, 162, 0.05);
+    p {
+      color: #aaaaaa;
+      margin: 0 0 8px 0;
+      font-size: 16px;
+    }
+    
+    .item {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      
+      input,
+      select {
+        background-color: #2a2a2a;
+        border: 1px solid #333;
+        border-radius: 4px;
+        color: #ffffff;
+        padding: 12px 16px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        
+        &:focus {
+          outline: none;
+          border-color: #00b8a2;
+          box-shadow: 0 0 0 2px rgba(0, 184, 162, 0.2);
+        }
+        
+        &:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+        
+        &::placeholder {
+          color: #777;
+        }
+      }
+      
+      select {
+        appearance: none;
+        padding-right: 30px;
+        background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2300b8a2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 12px;
+      }
+    }
+    
+    button[type="submit"], button:not(.close):not(.auth-btn):not(.guest-btn) {
+      background-color: #2a5d3a;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 12px 16px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 8px;
+      
+      &:hover:not(:disabled) {
+        background-color: #3a6d4a;
+        transform: translateY(-2px);
+      }
+      
+      &:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+    }
+    
+    .close {
+      cursor: pointer;
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: #aaaaaa;
+      font-size: 24px;
+      transition: color 0.3s ease;
+      
+      &:hover {
+        color: #00b8a2;
+      }
+    }
+  }
+  
+  /* Specific styles for auth options modal */
+  .auth-options {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: 8px 0;
+    
+    .auth-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background-color: #2a5d3a;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        background-color: #3a6d4a;
+        transform: translateY(-2px);
+      }
+      
+      .material-icons {
+        font-size: 20px;
+      }
+    }
+    
+    .guest-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 16px;
+      background-color: transparent;
+      color: #00b8a2;
+      border: 1px solid #00b8a2;
+      border-radius: 4px;
+      margin-top: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      
+      small {
+        color: #aaaaaa;
+        margin-top: 4px;
+        font-size: 12px;
+      }
+      
+      &:hover {
+        background-color: rgba(0, 184, 162, 0.05);
+        transform: translateY(-2px);
+      }
     }
   }
 }
-  
+
+@media (max-width: 480px) {
+  .modal-container .modal-body {
+    padding: 24px;
+    margin: 0 16px;
+    
+    h1 {
+      font-size: 20px;
+    }
+  }
+}

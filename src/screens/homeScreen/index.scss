@@ -87,6 +87,62 @@
         }
       }
       
+      /* Add this to your index.scss file */
+.auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  .user-greeting {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background-color: rgba(0, 184, 162, 0.1);
+    border-radius: 4px;
+    color: #00b8a2;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background-color: rgba(0, 184, 162, 0.2);
+    }
+    
+    .user-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background-color: #00b8a2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+  }
+  
+  .logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: transparent;
+    border: 1px solid #ff5757;
+    color: #ff5757;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background-color: rgba(255, 87, 87, 0.1);
+    }
+    
+    .material-icons {
+      font-size: 18px;
+    }
+  }
+}
       @media (max-width: 768px) {
         display: none;
         
