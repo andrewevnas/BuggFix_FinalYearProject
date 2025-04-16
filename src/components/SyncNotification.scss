@@ -1,80 +1,87 @@
-// src/components/SyncNotification.scss
 .sync-notification {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    min-width: 300px;
-    max-width: 400px;
-    background-color: #1e1e1e;
-    border-radius: 8px;
-    padding: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  min-width: 300px;
+  max-width: 400px;
+  background-color: #1e1e1e;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s ease;
+  
+  &.visible {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  
+  .notification-content {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    transform: translateY(100px);
-    opacity: 0;
-    transition: all 0.3s ease;
+    gap: 12px;
     
-    &.visible {
-      transform: translateY(0);
-      opacity: 1;
+    .material-icons {
+      font-size: 24px;
     }
     
-    .notification-content {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      
-      .material-icons {
-        font-size: 24px;
-      }
-      
-      p {
-        margin: 0;
-        font-size: 14px;
-        line-height: 1.5;
-      }
-    }
-    
-    .close-btn {
-      background: none;
-      border: none;
-      color: #aaa;
-      cursor: pointer;
-      padding: 4px;
-      
-      &:hover {
-        color: white;
-      }
-      
-      .material-icons {
-        font-size: 18px;
-      }
-    }
-    
-    &.success {
-      border-left: 4px solid #2a5d3a;
-      
-      .material-icons {
-        color: #2a5d3a;
-      }
-    }
-    
-    &.warning {
-      border-left: 4px solid #d9a40e;
-      
-      .material-icons {
-        color: #d9a40e;
-      }
-    }
-    
-    &.info {
-      border-left: 4px solid #209CEE;
-      
-      .material-icons {
-        color: #209CEE;
-      }
+    p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
     }
   }
+  
+  .close-btn {
+    background: none;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+    padding: 4px;
+    
+    &:hover {
+      color: white;
+    }
+    
+    .material-icons {
+      font-size: 18px;
+    }
+  }
+  
+  &.success {
+    border-left: 4px solid #2a5d3a;
+    
+    .material-icons {
+      color: #2a5d3a;
+    }
+  }
+  
+  &.warning {
+    border-left: 4px solid #d9a40e;
+    
+    .material-icons {
+      color: #d9a40e;
+    }
+  }
+  
+  &.info {
+    border-left: 4px solid #209CEE;
+    
+    .material-icons {
+      color: #209CEE;
+    }
+  }
+  
+  &.error {
+    border-left: 4px solid #e53935;
+    
+    .material-icons {
+      color: #e53935;
+    }
+  }
+}

@@ -1,4 +1,3 @@
-// src/components/SyncNotification.js
 import React, { useContext, useEffect, useState } from 'react';
 import { WorkspaceContext } from '../providers/workspaceProvider';
 import "./SyncNotification.scss";

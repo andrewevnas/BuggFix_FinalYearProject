@@ -4,18 +4,23 @@ import "./index.scss";
 import { RightComponent } from "./RightComponent";
 import { Modal } from "../../providers/modals/modal";
 import { WelcomeSection } from "./welcomeSection";
-
 import { AuthContext } from "../../providers/authProvider";
 
 export const HomeScreen = () => {
   const modalFeatures = useContext(ModalContext);
+  const { isAuthenticated, currentUser, logout } = useContext(AuthContext);
 
-  const openCreateWorkspaceModal = () => {
+  // In HomeScreen.js
+const openCreateWorkspaceModal = () => {
+  console.log("Create workspace clicked, authenticated:", isAuthenticated());
+  if (isAuthenticated()) {
+    // If logged in, directly open the workspace creation modal
     modalFeatures.openModal(modalConstants.CREATE_WORKSPACE);
-  };
-
-  // Inside your component
-  const { isAuthenticated, logout, currentUser } = useContext(AuthContext);
+  } else {
+    // If not logged in, show the auth options modal
+    modalFeatures.openModal(modalConstants.AUTH_OPTIONS);
+  }
+};
 
   // Function to scroll to workspaces section
   const scrollToWorkspaces = (e) => {
@@ -28,7 +33,6 @@ export const HomeScreen = () => {
   return (
     <div className="home-container">
       {/* Header */}
-
       <header className="main-header">
         <div className="logo-area">
           <img src="/BFlogo.png" alt="BuggFix logo" className="logo" />
@@ -36,20 +40,17 @@ export const HomeScreen = () => {
         </div>
 
         <nav className="nav-links">
-          <a href="#dashboard" className="active">
-            Dashboard
-          </a>
+          
           <a href="#workspaces" onClick={scrollToWorkspaces}>
             Workspaces
           </a>
-          <a href="#settings">Settings</a>
-
+          
           <div className="nav-links">
             {isAuthenticated() ? (
               <>
-                <span className="user-greeting">
-                  Hi, {currentUser.displayName}
-                </span>
+                <button >
+                  Hi, {currentUser.displayName} !
+                </button>
                 <button onClick={logout} className="auth-btn logout-btn">
                   <span className="material-icons">logout</span>
                   Logout
@@ -63,6 +64,7 @@ export const HomeScreen = () => {
           </div>
         </nav>
       </header>
+      
       {/* Main content container */}
       <div className="content-container">
         {/* Welcome section */}

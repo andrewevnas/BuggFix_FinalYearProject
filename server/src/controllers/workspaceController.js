@@ -1,8 +1,6 @@
 const Workspace = require('../models/Workspace');
 
-// @desc    Get all workspaces for a user
-// @route   GET /api/workspaces
-// @access  Private
+// Updated getWorkspaces function
 const getWorkspaces = async (req, res) => {
   try {
     const workspaces = await Workspace.find({ userId: req.user._id });
@@ -13,20 +11,59 @@ const getWorkspaces = async (req, res) => {
   }
 };
 
-// @desc    Create a new workspace
-// @route   POST /api/workspaces
-// @access  Private
+// Updated createWorkspace function
 const createWorkspace = async (req, res) => {
   try {
     const { folders } = req.body;
 
-    const workspace = new Workspace({
-      userId: req.user._id,
-      folders: folders || []
-    });
+    // First, check if a workspace exists for this user
+    let workspace = await Workspace.findOne({ userId: req.user._id });
+    
+    if (workspace) {
+      // Update existing workspace
+      workspace.folders = folders;
+      workspace.updatedAt = Date.now();
+    } else {
+      // Create new workspace
+      workspace = new Workspace({
+        userId: req.user._id,
+        folders: folders || []
+      });
+    }
 
-    const createdWorkspace = await workspace.save();
-    res.status(201).json(createdWorkspace);
+    const savedWorkspace = await workspace.save();
+    res.status(workspace.isNew ? 201 : 200).json(savedWorkspace);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Improved sync function
+const syncWorkspaces = async (req, res) => {
+  try {
+    const { folders } = req.body;
+    
+    // Find workspace for this user
+    const existingWorkspace = await Workspace.findOne({ userId: req.user._id });
+    
+    if (existingWorkspace) {
+      // Update the workspace with the new folders
+      existingWorkspace.folders = folders;
+      existingWorkspace.updatedAt = Date.now();
+      
+      const updatedWorkspace = await existingWorkspace.save();
+      res.json(updatedWorkspace);
+    } else {
+      // Create a new workspace for this user
+      const newWorkspace = new Workspace({
+        userId: req.user._id,
+        folders: folders
+      });
+      
+      const createdWorkspace = await newWorkspace.save();
+      res.status(201).json(createdWorkspace);
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -90,5 +127,6 @@ module.exports = {
   getWorkspaces,
   createWorkspace,
   updateWorkspace,
-  deleteWorkspace
+  deleteWorkspace,
+  syncWorkspaces
 };

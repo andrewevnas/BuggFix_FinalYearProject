@@ -4,7 +4,8 @@ const {
   getWorkspaces,
   createWorkspace,
   updateWorkspace,
-  deleteWorkspace
+  deleteWorkspace,
+  syncWorkspaces
 } = require('../controllers/workspaceController');
 const { protect } = require('../middleware/auth');
 
@@ -15,5 +16,7 @@ router.route('/')
 router.route('/:id')
   .put(protect, updateWorkspace)
   .delete(protect, deleteWorkspace);
+  
+router.put('/sync', protect, syncWorkspaces);
 
 module.exports = router;

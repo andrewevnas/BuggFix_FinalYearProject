@@ -1,6 +1,6 @@
-// src/providers/authProvider.js
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import { WorkspaceContext } from './workspaceProvider';
 
 export const AuthContext = createContext();
 
@@ -10,6 +10,9 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // We'll get this in a moment using forwardRef pattern
+  let workspaceContextValue = null;
 
   // Check if user is already logged in on component mount
   useEffect(() => {
@@ -83,7 +86,21 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     setCurrentUser(null);
+    
+    // Dispatch a custom event for workspace clearing
+    window.dispatchEvent(new Event('user-logout'));
   };
+
+  // When WorkspaceContext is connected, expose the function globally
+useEffect(() => {
+  if (WorkspaceContext && WorkspaceContext.clearLocalWorkspaces) {
+    window.clearWorkspaces = WorkspaceContext.clearLocalWorkspaces;
+  }
+  
+  return () => {
+    delete window.clearWorkspaces;
+  };
+}, [WorkspaceContext]);
 
   // Check if user is authenticated
   const isAuthenticated = () => {
@@ -96,20 +113,51 @@ export const AuthProvider = ({ children }) => {
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
+  // Forward ref-like pattern to get workspaceContext
+  const setWorkspaceContext = (context) => {
+    workspaceContextValue = context;
+  };
+
+  const authContext = {
+    currentUser,
+    loading,
+    error,
+    register,
+    login,
+    logout,
+    isAuthenticated,
+    getAuthHeader,
+    setWorkspaceContext
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        currentUser,
-        loading,
-        error,
-        register,
-        login,
-        logout,
-        isAuthenticated,
-        getAuthHeader
-      }}
-    >
+    <AuthContext.Provider value={authContext}>
       {children}
     </AuthContext.Provider>
   );
+};
+
+// Wrapper component to connect AuthProvider with WorkspaceProvider
+export const AuthProviderWithWorkspace = ({ children }) => {
+  return (
+    <AuthProvider>
+      <WorkspaceContextConnector>
+        {children}
+      </WorkspaceContextConnector>
+    </AuthProvider>
+  );
+};
+
+// Component to connect WorkspaceContext to AuthContext
+const WorkspaceContextConnector = ({ children }) => {
+  const workspaceContext = useContext(WorkspaceContext);
+  const authContext = useContext(AuthContext);
+  
+  useEffect(() => {
+    if (authContext.setWorkspaceContext && workspaceContext) {
+      authContext.setWorkspaceContext(workspaceContext);
+    }
+  }, [authContext, workspaceContext]);
+  
+  return <>{children}</>;
 };

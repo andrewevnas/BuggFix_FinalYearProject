@@ -1,12 +1,11 @@
-// src/App.js
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { HomeScreen } from "./screens/homeScreen";
 import { WorkspaceScreen } from "./screens/workspaceScreen";
 import AuthScreen from "./screens/authScreen";
-import SyncNotification from "./components/SyncNotification";
 import { WorkspaceProvider } from "./providers/workspaceProvider";
 import { ModalProvider } from "./providers/modalProvider";
 import { AuthProvider } from "./providers/authProvider";
+import SyncNotification from "./components/SyncNotification";
 
 function App() {
   return (

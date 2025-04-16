@@ -1,6 +1,8 @@
 import React, { useState, useContext, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../../providers/authProvider";
+import { WorkspaceContext } from "../../providers/workspaceProvider";
+import { ModalContext, modalConstants } from "../../providers/modalProvider";
 import "./auth.scss";
 
 const AuthScreen = () => {
@@ -12,6 +14,18 @@ const AuthScreen = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  const { syncWorkspacesToCloud } = useContext(WorkspaceContext);
+  const modalFeatures = useContext(ModalContext);
+  
+  // Get returnTo from location state if available
+  const returnTo = location?.state?.returnTo;
+  const initialTab = location?.state?.activeTab || 'login';
+  
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   
   const { login, register, error: authError, isAuthenticated } = useContext(AuthContext);
 
@@ -29,6 +43,23 @@ const AuthScreen = () => {
     }
   }, [authError]);
 
+  // After successful login or registration
+  const handleAuthSuccess = async () => {
+    // Sync workspaces
+    await syncWorkspacesToCloud();
+    
+    // Navigate based on returnTo
+    if (returnTo === 'create-workspace') {
+      navigate('/');
+      // Open create workspace modal after navigation completes
+      setTimeout(() => {
+        modalFeatures.openModal(modalConstants.CREATE_WORKSPACE);
+      }, 300);
+    } else {
+      navigate('/');
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -41,7 +72,7 @@ const AuthScreen = () => {
     setIsLoading(true);
     try {
       await login(email, password);
-      navigate("/");
+      await handleAuthSuccess();
     } catch (err) {
       // Error is set via authError effect
     } finally {
@@ -71,7 +102,7 @@ const AuthScreen = () => {
     setIsLoading(true);
     try {
       await register(email, password, displayName);
-      navigate("/");
+      await handleAuthSuccess();
     } catch (err) {
       // Error is set via authError effect
     } finally {
@@ -84,7 +115,6 @@ const AuthScreen = () => {
       <div className="auth-form-container">
         <div className="auth-header">
           <div className="logo-area">
-            
             <span className="logo-text">BUGGFIX</span>
           </div>
         </div>
