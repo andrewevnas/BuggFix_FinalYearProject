@@ -1,12 +1,28 @@
-// app.js
+
+const dotenv = require('dotenv');
+
+const connectDB = require('./config/db');
+const authRoutes = require('./routes/authRoutes');
+const workspaceRoutes = require('./routes/workspaceRoutes');
+
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const { OpenAI } = require("openai");
 
+// Load environment variables
+dotenv.config();
+
+// Connect to database
+connectDB();
+
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+////////////////////
+// AI API /////////
+///////////////////
 
 const baseURL = "https://api.aimlapi.com/v1";
 const apiKey = process.env.AIML_API_KEY;
@@ -61,8 +77,8 @@ ${code}`;
           content: userPrompt,
         },
       ],
-      temperature: 0.5, // Lower temperature for more consistent formatting
-      max_tokens: 1024, // Increased to allow for more detailed responses
+      temperature: 0.5, 
+      max_tokens: 1024, 
     });
 
     const response = completion.choices[0].message.content;
@@ -74,6 +90,31 @@ ${code}`;
       .status(500)
       .json({ error: "AIML API request failed", details: error.message });
   }
+});
+
+
+
+////////////////////
+// DB API /////////
+///////////////////
+
+// Routes
+app.use('/api/users', authRoutes);
+app.use('/api/workspaces', workspaceRoutes);
+
+// Basic route
+app.get('/', (req, res) => {
+  res.send('BuggFix API is running...');
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  res.status(statusCode);
+  res.json({
+    message: err.message,
+    stack: process.env.NODE_ENV === 'production' ? null : err.stack,
+  });
 });
 
 module.exports = app;

@@ -1,10 +1,17 @@
-import React from "react";
+// src/screens/homeScreen/welcomeSection.js
+import React, { useContext } from "react";
+import { Link } from "react-router-dom";
+import { AuthContext } from "../../providers/authProvider";
 
 export const WelcomeSection = ({ openCreateWorkspaceModal }) => {
+  const { isAuthenticated, currentUser } = useContext(AuthContext);
+  
   return (
     <section className="welcome-section">
       <div className="welcome-text">
-        <h1>Welcome to <span>BuggFix</span></h1>
+        <h1>
+          Welcome{isAuthenticated() ? `, ${currentUser.displayName}` : ''} to <span>BuggFix</span>
+        </h1>
         <p>
           Your modern, integrated development environment for coding, compiling, and debugging.
           Create workspaces to organize your projects and start coding with advanced AI suggestions.
@@ -18,6 +25,13 @@ export const WelcomeSection = ({ openCreateWorkspaceModal }) => {
             <span className="material-icons">info</span>
             Quick Tutorial
           </button>
+          
+          {!isAuthenticated() && (
+            <Link to="/auth" className="btn btn-secondary">
+              <span className="material-icons">login</span>
+              Login / Register
+            </Link>
+          )}
         </div>
       </div>
       <div className="welcome-image">

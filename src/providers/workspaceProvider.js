@@ -1,69 +1,94 @@
+// src/providers/workspaceProvider.js - Modified version
 import { createContext, useContext, useEffect, useState } from "react";
 import { v4 } from "uuid";
+import { AuthContext } from "./authProvider";
+import axios from 'axios';
 
 export const WorkspaceContext = createContext();
 
-const initialData = [
-  {
-    id: v4(),
-    title: "Spring Boot",
-    files: [
-      {
-        id: v4(),
-        title: "index",
-        code: 'cout<<"hello world";',
-        language: "cpp",
-      },
-    ],
-  },
-
-  {
-    id: v4(),
-    title: "Frontend",
-    files: [
-      {
-        id: v4(),
-        title: "test",
-        code: 'console.log("Hello Frontend"',
-        language: "javascript",
-      },
-    ],
-  },
-];
+const API_URL = 'http://localhost:4000/api'; // Adjust to your API URL
 
 export const defaultCodes = {
-  cpp: `#include <iostream>
-using namespace std;
-int main(){
-  cout<<"Hello World";
-  return 0;
-}`,
-
-  javascript: `console.log("hello javascript")`,
-
-  python: `print("hello python")`,
-
-  java: `public class Main{
-  public static void main(String[] args) {
-    System.out.println("Hello World");
-  }
-}`,
+  // Your existing default codes
 };
 
 export const WorkspaceProvider = ({ children }) => {
-  const [folders, setFolders] = useState(() => {
-    const localData = localStorage.getItem("data");
-    if (localData) {
-      return JSON.parse(localData);
-    }
-    return initialData;
-  });
+  const { isAuthenticated, currentUser, getAuthHeader } = useContext(AuthContext);
+  const [folders, setFolders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [syncMessage, setSyncMessage] = useState(null);
+  
+  // Load workspaces either from API or localStorage
+  useEffect(() => {
+    const loadWorkspaces = async () => {
+      setLoading(true);
+      if (isAuthenticated()) {
+        // Get workspaces from API
+        try {
+          const response = await axios.get(`${API_URL}/workspaces`, {
+            headers: getAuthHeader()
+          });
+          setFolders(response.data.folders || []);
+          setSyncMessage({
+            type: 'success',
+            text: `Welcome back, ${currentUser.displayName}! Your workspaces are synced.`
+          });
+        } catch (error) {
+          console.error("Error loading workspaces:", error);
+          // Fallback to local storage
+          const localData = localStorage.getItem("data");
+          if (localData) {
+            setFolders(JSON.parse(localData));
+            setSyncMessage({
+              type: 'warning',
+              text: 'Failed to load your saved workspaces. Using local data instead.'
+            });
+          }
+        }
+      } else {
+        // Load from localStorage for guests
+        const localData = localStorage.getItem("data");
+        if (localData) {
+          setFolders(JSON.parse(localData));
+        }
+      }
+      setLoading(false);
+    };
 
-  const createNewWorkspace = (newWorkspace) => {
+    loadWorkspaces();
+  }, [isAuthenticated, currentUser]);
+
+  // Save workspaces to both API and localStorage
+  const saveWorkspaces = async (updatedFolders) => {
+    setFolders(updatedFolders);
+    
+    // Always save to localStorage as a backup and for guest mode
+    localStorage.setItem("data", JSON.stringify(updatedFolders));
+    
+    // If authenticated, also save to API
+    if (isAuthenticated()) {
+      try {
+        await axios.put(
+          `${API_URL}/workspaces/${currentUser._id}`, 
+          { folders: updatedFolders },
+          { headers: getAuthHeader() }
+        );
+      } catch (error) {
+        console.error("Error saving workspaces to API:", error);
+        setSyncMessage({
+          type: 'warning',
+          text: 'Your changes are saved locally but not synced to the cloud.'
+        });
+      }
+    }
+  };
+
+  // Create new workspace
+  const createNewWorkspace = async (newWorkspace) => {
     const { fileName, folderName, language } = newWorkspace;
     const newFolders = [...folders];
 
-    newFolders.push({
+    const newFolder = {
       id: v4(),
       title: folderName,
       files: [
@@ -74,22 +99,32 @@ export const WorkspaceProvider = ({ children }) => {
           language,
         },
       ],
-    });
+    };
+    
+    newFolders.push(newFolder);
 
-    localStorage.setItem("data", JSON.stringify(newFolders));
-    setFolders(newFolders);
+    // Save to both localStorage and API if authenticated
+    await saveWorkspaces(newFolders);
+    
+    // Show welcome message for guests with a prompt to register
+    if (!isAuthenticated()) {
+      setSyncMessage({
+        type: 'info',
+        text: 'Your workspace is saved locally. Create an account to save it to the cloud!'
+      });
+    }
   };
 
-  const deleteFolder = (id) => {
+  // Your other CRUD operations
+  const deleteFolder = async (id) => {
     const updatedFoldersList = folders.filter((folderItem) => {
       return folderItem.id !== id;
     });
   
-    localStorage.setItem('data', JSON.stringify(updatedFoldersList));
-    setFolders(updatedFoldersList);
+    await saveWorkspaces(updatedFoldersList);
   };
 
-  const editFolderTitle = (newFolderName, id) => {
+  const editFolderTitle = async (newFolderName, id) => {
     const updatedFoldersList = folders.map((folderItem) => {
       if (folderItem.id === id) {
         folderItem.title = newFolderName;
@@ -97,11 +132,10 @@ export const WorkspaceProvider = ({ children }) => {
       return folderItem;
     });
   
-    localStorage.setItem('data', JSON.stringify(updatedFoldersList));
-    setFolders(updatedFoldersList);
+    await saveWorkspaces(updatedFoldersList);
   };
 
-  const editFileTitle = (newFileName, folderId, fileId) => {
+  const editFileTitle = async (newFileName, folderId, fileId) => {
     const copiedFolders = [...folders];
     for (let i = 0; i < copiedFolders.length; i++) {
       if (folderId === copiedFolders[i].id) {
@@ -116,29 +150,10 @@ export const WorkspaceProvider = ({ children }) => {
       }
     }
   
-    localStorage.setItem('data', JSON.stringify(copiedFolders));
-    setFolders(copiedFolders);
+    await saveWorkspaces(copiedFolders);
   };
 
-  // New function to get the file title 
-  const getFileTitle = (fileId, folderId) => {
-    if (!fileId || !folderId) return null;
-    
-    for (let i = 0; i < folders.length; i++) {
-      if (folders[i].id === folderId) {
-        const files = folders[i].files;
-        for (let j = 0; j < files.length; j++) {
-          if (files[j].id === fileId) {
-            return files[j].title;
-          }
-        }
-      }
-    }
-    
-    return null;
-  };
-
-  const deleteFile = (folderId, fileId) => {
+  const deleteFile = async (folderId, fileId) => {
     const copiedFolders = [...folders];
     for (let i = 0; i < copiedFolders.length; i++) {
       if (copiedFolders[i].id === folderId) {
@@ -150,11 +165,10 @@ export const WorkspaceProvider = ({ children }) => {
       }
     }
   
-    localStorage.setItem('data', JSON.stringify(copiedFolders));
-    setFolders(copiedFolders);
+    await saveWorkspaces(copiedFolders);
   };
 
-  const createNewCard = (folderId, file) => {
+  const createNewCard = async (folderId, file) => {
     const copiedFolders = [...folders];
     for (let i = 0; i < copiedFolders.length; i++) {
       if (copiedFolders[i].id === folderId) {
@@ -163,8 +177,7 @@ export const WorkspaceProvider = ({ children }) => {
       }
     }
   
-    localStorage.setItem('data', JSON.stringify(copiedFolders));
-    setFolders(folders);
+    await saveWorkspaces(copiedFolders);
   };
 
   const getDefaultCode = (fileId, folderId) => {
@@ -180,6 +193,20 @@ export const WorkspaceProvider = ({ children }) => {
     }
   };
 
+  const getFileTitle = (fileId, folderId) => {
+    for (let i = 0; i < folders.length; i++) {
+      if (folders[i].id === folderId) {
+        for (let j = 0; j < folders[i].files.length; j++) {
+          const currentFile = folders[i].files[j];
+          if (fileId === currentFile.id) {
+            return currentFile.title;
+          }
+        }
+      }
+    }
+    return null; 
+  };
+
   const getLanguage = (fileId, folderId) => {
     for (let i = 0; i < folders.length; i++) {
       if (folders[i].id === folderId) {
@@ -193,7 +220,7 @@ export const WorkspaceProvider = ({ children }) => {
     }
   };
 
-  const updateLanguage = (fileId, folderId, language) => {
+  const updateLanguage = async (fileId, folderId, language) => {
     const newFolders = [...folders];
     for (let i = 0; i < newFolders.length; i++) {
       if (newFolders[i].id === folderId) {
@@ -207,11 +234,10 @@ export const WorkspaceProvider = ({ children }) => {
       }
     }
   
-    localStorage.setItem('data', JSON.stringify(newFolders));
-    setFolders(newFolders);
+    await saveWorkspaces(newFolders);
   };
 
-  const saveCode = (fileId, folderId, newCode) => {
+  const saveCode = async (fileId, folderId, newCode) => {
     const newFolders = [...folders];
     for (let i = 0; i < newFolders.length; i++) {
       if (newFolders[i].id === folderId) {
@@ -224,28 +250,13 @@ export const WorkspaceProvider = ({ children }) => {
       }
     }
   
-    localStorage.setItem('data', JSON.stringify(newFolders));
-    setFolders(newFolders);
+    await saveWorkspaces(newFolders);
   };
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-  useEffect(() => {
-    if (!localStorage.getItem("data")) {
-      localStorage.setItem("data", JSON.stringify(folders));
-    }
-  }, []);
 
   const workspaceFeatures = {
     folders,
+    loading,
+    syncMessage,
     createNewWorkspace,
     deleteFolder,
     editFolderTitle,
@@ -256,8 +267,8 @@ export const WorkspaceProvider = ({ children }) => {
     getLanguage,
     updateLanguage,
     saveCode,
-    getFileTitle
-    
+    getFileTitle, 
+    clearSyncMessage: () => setSyncMessage(null)
   };
 
   return (
