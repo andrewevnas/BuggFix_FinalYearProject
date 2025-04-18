@@ -128,7 +128,7 @@ export const WorkspaceProvider = ({ children }) => {
         console.log("Saving workspace to cloud:", newFolders);
         await axios.post(
           `${API_URL}/workspaces`,
-          { folders: newFolders }, // Send ALL folders to replace the entire workspace
+          { folders: newFolders }, // Send all folders to replace the entire workspace
           { headers: getAuthHeader() }
         );
         
@@ -186,7 +186,7 @@ export const WorkspaceProvider = ({ children }) => {
     }
   };
 
-  // DELETE FOLDER - Using the same pattern as createNewWorkspace
+  // DELETE FOLDER 
   const deleteFolder = async (id) => {
     console.log("Deleting folder with ID:", id);
     
@@ -232,7 +232,7 @@ export const WorkspaceProvider = ({ children }) => {
     return true;
   };
 
-  // EDIT FOLDER TITLE - Using the same pattern
+  // EDIT FOLDER TITLE 
   const editFolderTitle = async (newFolderName, id) => {
     console.log("Editing folder title:", id, "to", newFolderName);
     
@@ -281,7 +281,7 @@ export const WorkspaceProvider = ({ children }) => {
     return true;
   };
 
-  // EDIT FILE TITLE - Using the same pattern
+  // EDIT FILE TITLE 
   const editFileTitle = async (newFileName, folderId, fileId) => {
     console.log("Editing file title:", fileId, "in folder", folderId, "to", newFileName);
     
@@ -339,7 +339,7 @@ export const WorkspaceProvider = ({ children }) => {
     return true;
   };
 
-  // DELETE FILE - Using the same pattern
+  // DELETE FILE 
   const deleteFile = async (folderId, fileId) => {
     console.log("Deleting file:", fileId, "from folder", folderId);
     
@@ -391,7 +391,7 @@ export const WorkspaceProvider = ({ children }) => {
     return true;
   };
 
-  // CREATE NEW CARD - Using the same pattern
+  // CREATE NEW CARD 
   const createNewCard = async (folderId, file) => {
     console.log("Creating new card in folder:", folderId);
     
@@ -443,7 +443,7 @@ export const WorkspaceProvider = ({ children }) => {
     return true;
   };
 
-  // UPDATE LANGUAGE - Using the same pattern
+  // UPDATE LANGUAGE 
   const updateLanguage = async (fileId, folderId, language) => {
     console.log("Updating language for file:", fileId, "in folder", folderId, "to", language);
     
@@ -500,7 +500,7 @@ export const WorkspaceProvider = ({ children }) => {
     return true;
   };
 
-  // SAVE CODE - Using the same pattern
+  // SAVE CODE 
   const saveCode = async (fileId, folderId, newCode) => {
     console.log("Saving code for file:", fileId, "in folder", folderId);
     

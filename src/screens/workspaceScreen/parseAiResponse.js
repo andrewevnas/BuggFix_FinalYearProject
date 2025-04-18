@@ -16,15 +16,14 @@ export const parseAIResponse = (aiResponse) => {
   let feedback = aiResponse;
   
   if (matches && matches.length > 0) {
-    // Take the first code block found (typically there should be just one)
+    // Take the first code block found 
     extractedCode = matches[0][1].trim();
     
     // Remove all code blocks from the original response to get just the feedback
     feedback = aiResponse.replace(codeRegex, '').trim();
   }
   
-  // If no code was found with the tags, check if there might be a formatting issue
-  // Sometimes the AI might use markdown code blocks despite instructions
+ 
   if (!extractedCode) {
     const markdownRegex = /```(?:\w*\n)?([\s\S]*?)```/g;
     const markdownMatches = [...aiResponse.matchAll(markdownRegex)];

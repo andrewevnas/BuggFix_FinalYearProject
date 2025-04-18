@@ -384,7 +384,7 @@ export const EditorContainer = ({
     // Don't allow running during animation
     if (isAnimating) return;
     
-    // Important: We're now calling runCode with only the language
+    
     // The code is now accessed directly from the parent's state
     runCode({ language });
   };

@@ -4,14 +4,14 @@ import { WorkspaceContext } from './workspaceProvider';
 
 export const AuthContext = createContext();
 
-const API_URL = 'http://localhost:4000/api'; // Adjust to your API URL
+const API_URL = 'http://localhost:4000/api'; 
 
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // We'll get this in a moment using forwardRef pattern
+  
   let workspaceContextValue = null;
 
   // Check if user is already logged in on component mount

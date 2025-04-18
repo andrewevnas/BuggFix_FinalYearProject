@@ -1,4 +1,4 @@
-// src/screens/accountScreen/index.js
+
 import React, { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../providers/authProvider";
@@ -17,7 +17,7 @@ export const AccountScreen = () => {
 
   const handleDeactivate = () => {
     // Here you would call an API to deactivate the account
-    // For now, we'll just log out the user
+    // For now, just log out the user
     logout();
     navigate("/");
   };

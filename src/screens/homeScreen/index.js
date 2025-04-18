@@ -11,7 +11,7 @@ export const HomeScreen = () => {
   const modalFeatures = useContext(ModalContext);
   const { isAuthenticated, currentUser, logout } = useContext(AuthContext);
 
-  // In HomeScreen.js
+  
   const openCreateWorkspaceModal = () => {
     console.log("Create workspace clicked, authenticated:", isAuthenticated());
     if (isAuthenticated()) {

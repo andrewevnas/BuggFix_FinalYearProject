@@ -258,7 +258,7 @@ export const WorkspaceScreen = () => {
     } else if (apiStatus === "error") {
       setShowLoader(false);
       setOutput("Something went wrong");
-      // After it fails, maybe you still want to show output tab:
+      
       setActiveTab("output");
     } else {
       // success
@@ -273,11 +273,10 @@ export const WorkspaceScreen = () => {
     }
   };
 
-  // This is used by EditorContainer to run code
-  // Updated to use the current code state to ensure we run the displayed code
+ 
   const runCode = useCallback(
     ({ language }) => {
-      // Important: we now directly use the current code state - not ref value
+      
       makeSubmission({ code, language, stdin: input, callback });
     },
     [input, code] // Add code as a dependency so it updates when code changes
@@ -295,11 +294,11 @@ export const WorkspaceScreen = () => {
       if (isViewingOriginalCode) {
         // Switch to AI code
         if (aiCode) {
-          // Instead of directly setting the code state, we'll animate it
+          // Instead of directly setting the code state, animate it
           // First set an empty string to prepare for animation
           setCode("");
           
-          // Show notification that we're starting animation
+          // Show notification
           const notification = document.createElement("div");
           notification.className = "save-notification ai-update";
           notification.textContent = "Displaying AI suggestions...";
@@ -334,11 +333,11 @@ export const WorkspaceScreen = () => {
       } else {
         // Switch to original code
         if (originalCode) {
-          // Instead of directly setting the code state, we'll animate it
+          
           // First set an empty string to prepare for animation
           setCode("");
           
-          // Show notification that we're starting animation
+          // Show notification
           const notification = document.createElement("div");
           notification.className = "save-notification revert";
           notification.textContent = "Restoring original code...";
@@ -391,11 +390,11 @@ export const WorkspaceScreen = () => {
   // Update code from AI suggestions
   const updateCodeFromAI = (currentCode, newAiCode) => {
     if (newAiCode === null) {
-      // We're just saving the original state
+      // saving the original state
       setOriginalCode(currentCode);
       setIsViewingOriginalCode(true);
     } else {
-      // Save both versions but don't update code yet (we'll animate it)
+      // Save both versions but don't update code 
       if (originalCode === null) {
         setOriginalCode(currentCode);
       }
@@ -442,7 +441,7 @@ export const WorkspaceScreen = () => {
           setIsAnimating(true);
           
           try {
-            // Show notification that we're applying AI suggestions
+            // Show notification
             const notification = document.createElement("div");
             notification.className = "save-notification ai-update";
             notification.textContent = "Applying AI suggestions...";
@@ -453,7 +452,7 @@ export const WorkspaceScreen = () => {
               setTimeout(() => document.body.removeChild(notification), 500);
             }, 1000);
             
-            // Set the state to indicate we're viewing AI code
+            // Set the state 
             setIsViewingOriginalCode(false);
             
             // Wait a brief moment for the UI to update
