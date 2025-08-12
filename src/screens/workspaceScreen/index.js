@@ -7,8 +7,6 @@ import { parseAIResponse } from "./parseAiResponse";
 import { WorkspaceContext, defaultCodes } from "../../providers/workspaceProvider";
 import { useContext } from "react";
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-
 // ResizeObserver error prevention
 const debounce = (fn, delay) => {
   let timeoutId;
@@ -414,11 +412,11 @@ export const WorkspaceScreen = () => {
   const runAI = async (userCode, language) => {
     try {
       setShowLoader(true);
-      const response = await fetch(`${API_URL}/ai/fix-code`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ code: userCode, language }),
-});
+      const response = await fetch("http://localhost:4000/api/ai/fix-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: userCode, language }),
+      });
       const data = await response.json();
       setShowLoader(false);
   
@@ -534,7 +532,7 @@ export const WorkspaceScreen = () => {
       {/* HEADER / NAVBAR */}
       <header className="main-header">
         <div className="logo-area" onClick={goHome}>
-          <img src="/BFlogo.png" className="logo" alt="logo" />
+          
           <span className="logo-text">BUGGFIX</span>
         </div>
 

@@ -26,7 +26,7 @@ export const AccountScreen = () => {
     <div className="account-container">
       <header className="main-header">
         <div className="logo-area">
-          <img src="/BFlogo.png" alt="BuggFix logo" className="logo" />
+          
           <span className="logo-text">BUGGFIX</span>
         </div>
 
