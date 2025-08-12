@@ -1,11 +1,17 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5d96b9a3281f62194585266c936f991b9b928e2c
 import React, { useContext, useRef } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../../providers/authProvider";
 
 export const WelcomeSection = ({ openCreateWorkspaceModal }) => {
   const { isAuthenticated, currentUser } = useContext(AuthContext);
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5d96b9a3281f62194585266c936f991b9b928e2c
   const videoRef = useRef(null);
 
   const handleEnter = () => {
@@ -18,7 +24,11 @@ export const WelcomeSection = ({ openCreateWorkspaceModal }) => {
       videoRef.current.currentTime = 0; // reset to start
     }
   };
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> 5d96b9a3281f62194585266c936f991b9b928e2c
   return (
     <section className="welcome-section">
       <div className="welcome-text">
@@ -38,7 +48,7 @@ export const WelcomeSection = ({ openCreateWorkspaceModal }) => {
             <span className="material-icons">info</span>
             Quick Tutorial
           </button>
-          
+
           {!isAuthenticated() && (
             <Link to="/auth" className="btn btn-secondary">
               <span className="material-icons">login</span>
@@ -47,6 +57,10 @@ export const WelcomeSection = ({ openCreateWorkspaceModal }) => {
           )}
         </div>
       </div>
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5d96b9a3281f62194585266c936f991b9b928e2c
       <div className="welcome-video">
         <video
           ref={videoRef}

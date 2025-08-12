@@ -10,7 +10,11 @@ import {
 } from "../../providers/workspaceProvider";
 import { useContext } from "react";
 
+<<<<<<< HEAD
 const API_URL = process.env.REACT_APP_API_URL || '/api';
+=======
+const API_URL = process.env.REACT_APP_API_URL || "/api";
+>>>>>>> 5d96b9a3281f62194585266c936f991b9b928e2c
 
 // ResizeObserver error prevention
 const debounce = (fn, delay) => {
@@ -420,6 +424,10 @@ export const WorkspaceScreen = () => {
   const runAI = async (userCode, language) => {
     try {
       setShowLoader(true);
+<<<<<<< HEAD
+=======
+      // later
+>>>>>>> 5d96b9a3281f62194585266c936f991b9b928e2c
       const response = await fetch(`${API_URL}/ai/fix-code`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

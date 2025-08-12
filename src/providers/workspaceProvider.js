@@ -5,7 +5,8 @@ import axios from 'axios';
 
 export const WorkspaceContext = createContext();
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://bugg-fix-final-year-project-5qi7.vercel.app/';
+const API_URL = process.env.REACT_APP_API_URL || '/api';
+
 
 export const defaultCodes = {
   cpp: `#include <iostream>
