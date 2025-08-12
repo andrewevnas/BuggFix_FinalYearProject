@@ -1,3 +1,6 @@
-const serverless = require('serverless-http');
-const app = require('../src/app');   // you already module.exports = app in src/app.js
-module.exports = serverless(app);
+// server/api/index.js
+const app = require('../app'); // was '../src/app'
+module.exports = (req, res) => {
+  if (req.url.startsWith('/api')) req.url = req.url.replace(/^\/api/, '');
+  return app(req, res);
+};

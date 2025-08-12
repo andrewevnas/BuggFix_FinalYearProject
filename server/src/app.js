@@ -19,7 +19,9 @@ dotenv.config();
 connectDB();
 
 const app = express();
-app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:3000" }));
+// server/app.js
+app.use(cors({ origin: process.env.CLIENT_URL?.split(',') || ['http://localhost:3000'], credentials: true }));
+
 app.use(express.json());
 
 ////////////////////
@@ -120,3 +122,28 @@ app.use((err, req, res, next) => {
 });
 
 module.exports = app;
+
+
+// server/app.js
+const fetch = require('node-fetch');
+app.post('/api/compile', async (req, res) => {
+  const { code, language, stdin } = req.body;
+  try {
+    const r = await fetch('https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=true&wait=false&fields=*', {
+      method: 'POST',
+      headers: {
+        'x-rapidapi-key': process.env.RAPIDAPI_KEY,
+        'x-rapidapi-host': 'judge0-ce.p.rapidapi.com',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ language_id: languageCodeMap[language], source_code: Buffer.from(code).toString('base64'), stdin: Buffer.from(stdin||'').toString('base64') })
+    });
+    res.status(200).json(await r.json());
+  } catch (e) { res.status(500).json({ error: 'compile_failed' }); }
+});
+
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
+app.use(helmet());
+app.use(rateLimit({ windowMs: 15*60*1000, max: 300 }));
