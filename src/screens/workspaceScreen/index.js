@@ -4,8 +4,13 @@ import "./WSindex.scss";
 import { EditorContainer } from "./editorContainer";
 import { makeSubmission } from "./service";
 import { parseAIResponse } from "./parseAiResponse";
-import { WorkspaceContext, defaultCodes } from "../../providers/workspaceProvider";
+import {
+  WorkspaceContext,
+  defaultCodes,
+} from "../../providers/workspaceProvider";
 import { useContext } from "react";
+
+const API_URL = process.env.REACT_APP_API_URL || '/api';
 
 // ResizeObserver error prevention
 const debounce = (fn, delay) => {
@@ -21,9 +26,13 @@ const debounce = (fn, delay) => {
 };
 
 // Prevent ResizeObserver loop limit exceeded error
-const resizeObserverError = error => {
-  if (error.message.includes('ResizeObserver loop limit exceeded') || 
-      error.message.includes('ResizeObserver loop completed with undelivered notifications')) {
+const resizeObserverError = (error) => {
+  if (
+    error.message.includes("ResizeObserver loop limit exceeded") ||
+    error.message.includes(
+      "ResizeObserver loop completed with undelivered notifications"
+    )
+  ) {
     // Just returning prevents the error from being logged to the console
     return;
   }
@@ -32,12 +41,12 @@ const resizeObserverError = error => {
 };
 
 // Add the error handler
-window.addEventListener('error', event => {
+window.addEventListener("error", (event) => {
   resizeObserverError(event.error);
 });
 
 // Handle promise rejection errors too
-window.addEventListener('unhandledrejection', event => {
+window.addEventListener("unhandledrejection", (event) => {
   if (event.reason instanceof Error) {
     resizeObserverError(event.reason);
   }
@@ -53,13 +62,13 @@ window.addEventListener('unhandledrejection', event => {
 export const animateCodeTypingEnhanced = (editor, code, speed = 15) => {
   return new Promise((resolve) => {
     // Split target code into lines
-    const targetLines = code.split('\n');
-    
+    const targetLines = code.split("\n");
+
     // Clear the editor
-    editor.setValue('');
-    
+    editor.setValue("");
+
     let currentLineIndex = 0;
-    
+
     // Function to type the next line
     const typeNextLine = () => {
       // If we've completed all lines, resolve the promise
@@ -67,25 +76,23 @@ export const animateCodeTypingEnhanced = (editor, code, speed = 15) => {
         resolve();
         return;
       }
-      
+
       // Get the current line we're working with
       const currentLine = targetLines[currentLineIndex];
-      
+
       // Determine indentation (leading whitespace)
       const indentation = currentLine.match(/^(\s*)/)[0];
       const content = currentLine.substring(indentation.length);
-      
+
       // First add the indentation instantly (no animation)
       const currentContent = editor.getValue();
       editor.setValue(
-        currentContent + 
-        (currentLineIndex > 0 ? '\n' : '') + 
-        indentation
+        currentContent + (currentLineIndex > 0 ? "\n" : "") + indentation
       );
-      
+
       // Then animate typing the content of the line
       let contentIndex = 0;
-      
+
       const typeContent = () => {
         if (contentIndex >= content.length) {
           // Move to next line
@@ -93,22 +100,20 @@ export const animateCodeTypingEnhanced = (editor, code, speed = 15) => {
           setTimeout(typeNextLine, speed * 2); // Pause between lines
           return;
         }
-        
+
         // Add the next character
-        editor.setValue(
-          editor.getValue() + content[contentIndex]
-        );
-        
+        editor.setValue(editor.getValue() + content[contentIndex]);
+
         contentIndex++;
-        
+
         // Schedule the next character
         setTimeout(typeContent, speed);
       };
-      
+
       // Start typing the content
       typeContent();
     };
-    
+
     // Start the typing animation
     typeNextLine();
   });
@@ -118,24 +123,24 @@ export const WorkspaceScreen = () => {
   const params = useParams();
   const { fileId, folderId } = params;
   const navigate = useNavigate();
-  
+
   // Get workspace context for saving and loading code
   const workspaceContext = useContext(WorkspaceContext);
   const { getDefaultCode, getLanguage } = workspaceContext;
 
   // For the nav menu (burger toggle)
   const [isNavOpen, setIsNavOpen] = useState(false);
-  
+
   // State for responsive layout
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
-  // Input / Output / AI states 
+  // Input / Output / AI states
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [aiSuggestions, setAiSuggestions] = useState("");
   const [activeTab, setActiveTab] = useState("input");
   const [showLoader, setShowLoader] = useState(false);
-  
+
   // Initialize language from context or default to cpp
   const [language, setLanguage] = useState(() => {
     try {
@@ -148,19 +153,19 @@ export const WorkspaceScreen = () => {
     }
     return "cpp"; // Default language if not found
   });
-  
+
   // Get the initial code - prioritize saved code, fall back to language default
   const [code, setCode] = useState(() => {
     try {
       if (fileId && folderId) {
         // First try to get saved code
         const savedCode = getDefaultCode(fileId, folderId);
-        
+
         if (savedCode) {
           console.log("Loading saved code");
           return savedCode;
         }
-        
+
         // If no saved code, use language default
         const fileLanguage = getLanguage(fileId, folderId);
         if (fileLanguage && defaultCodes[fileLanguage]) {
@@ -171,22 +176,22 @@ export const WorkspaceScreen = () => {
     } catch (error) {
       console.error("Error loading code:", error);
     }
-    
+
     // Last resort fallback - use default for current language
     console.log(`Using fallback default code for ${language}`);
     return defaultCodes[language] || "";
   });
-  
+
   // Track original code and AI code versions
   const [originalCode, setOriginalCode] = useState(null);
   const [aiCode, setAiCode] = useState(null);
-  
+
   // Track whether we're currently viewing original or AI code
   const [isViewingOriginalCode, setIsViewingOriginalCode] = useState(true);
-  
+
   // Reference to the current Monaco editor instance
   const [editorInstance, setEditorInstance] = useState(null);
-  
+
   // State to track if animation is in progress
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -197,7 +202,7 @@ export const WorkspaceScreen = () => {
       try {
         const code = getDefaultCode(fileId, folderId);
         const lang = getLanguage(fileId, folderId);
-        
+
         // If both code and language are undefined, file doesn't exist
         if (code === undefined && lang === undefined) {
           console.warn("File not found, navigating to home");
@@ -215,11 +220,11 @@ export const WorkspaceScreen = () => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-    
-    window.addEventListener('resize', handleResize);
-    
+
+    window.addEventListener("resize", handleResize);
+
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
@@ -235,7 +240,7 @@ export const WorkspaceScreen = () => {
       alert("Please choose a valid text file");
     }
   };
-  
+
   const exportOutput = () => {
     const outputValue = output.trim();
     if (!outputValue) {
@@ -258,7 +263,7 @@ export const WorkspaceScreen = () => {
     } else if (apiStatus === "error") {
       setShowLoader(false);
       setOutput("Something went wrong");
-      
+
       setActiveTab("output");
     } else {
       // success
@@ -273,10 +278,8 @@ export const WorkspaceScreen = () => {
     }
   };
 
- 
   const runCode = useCallback(
     ({ language }) => {
-      
       makeSubmission({ code, language, stdin: input, callback });
     },
     [input, code] // Add code as a dependency so it updates when code changes
@@ -286,10 +289,10 @@ export const WorkspaceScreen = () => {
   const toggleCodeVersion = async () => {
     // If animation is already in progress, don't allow another toggle
     if (isAnimating || !editorInstance) return;
-    
+
     // Set animating state to block multiple toggles
     setIsAnimating(true);
-    
+
     try {
       if (isViewingOriginalCode) {
         // Switch to AI code
@@ -297,82 +300,87 @@ export const WorkspaceScreen = () => {
           // Instead of directly setting the code state, animate it
           // First set an empty string to prepare for animation
           setCode("");
-          
+
           // Show notification
           const notification = document.createElement("div");
           notification.className = "save-notification ai-update";
           notification.textContent = "Displaying AI suggestions...";
           document.body.appendChild(notification);
-          
+
           setTimeout(() => {
             notification.classList.add("fade-out");
             setTimeout(() => document.body.removeChild(notification), 500);
           }, 1000);
-          
+
           // Wait a brief moment for the UI to update
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
+          await new Promise((resolve) => setTimeout(resolve, 100));
+
           // Begin animation
           await animateCodeTypingEnhanced(editorInstance, aiCode);
-          
+
           // After animation completes, update the state
           setCode(aiCode);
           setIsViewingOriginalCode(false);
-          
+
           // Show notification that animation is complete
           const completionNotification = document.createElement("div");
           completionNotification.className = "save-notification ai-update";
           completionNotification.textContent = "AI code applied";
           document.body.appendChild(completionNotification);
-          
+
           setTimeout(() => {
             completionNotification.classList.add("fade-out");
-            setTimeout(() => document.body.removeChild(completionNotification), 500);
+            setTimeout(
+              () => document.body.removeChild(completionNotification),
+              500
+            );
           }, 2000);
         }
       } else {
         // Switch to original code
         if (originalCode) {
-          
           // First set an empty string to prepare for animation
           setCode("");
-          
+
           // Show notification
           const notification = document.createElement("div");
           notification.className = "save-notification revert";
           notification.textContent = "Restoring original code...";
           document.body.appendChild(notification);
-          
+
           setTimeout(() => {
             notification.classList.add("fade-out");
             setTimeout(() => document.body.removeChild(notification), 500);
           }, 1000);
-          
+
           // Wait a brief moment for the UI to update
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
+          await new Promise((resolve) => setTimeout(resolve, 100));
+
           // Begin animation
           await animateCodeTypingEnhanced(editorInstance, originalCode);
-          
+
           // After animation completes, update the state
           setCode(originalCode);
           setIsViewingOriginalCode(true);
-          
+
           // Show notification that animation is complete
           const completionNotification = document.createElement("div");
           completionNotification.className = "save-notification revert";
           completionNotification.textContent = "Original code restored";
           document.body.appendChild(completionNotification);
-          
+
           setTimeout(() => {
             completionNotification.classList.add("fade-out");
-            setTimeout(() => document.body.removeChild(completionNotification), 500);
+            setTimeout(
+              () => document.body.removeChild(completionNotification),
+              500
+            );
           }, 2000);
         }
       }
     } catch (error) {
       console.error("Animation error:", error);
-      
+
       // If animation fails, just update the state directly
       if (isViewingOriginalCode && aiCode) {
         setCode(aiCode);
@@ -394,11 +402,11 @@ export const WorkspaceScreen = () => {
       setOriginalCode(currentCode);
       setIsViewingOriginalCode(true);
     } else {
-      // Save both versions but don't update code 
+      // Save both versions but don't update code
       if (originalCode === null) {
         setOriginalCode(currentCode);
       }
-      
+
       // Only store the AI code, but don't apply it yet
       setAiCode(newAiCode);
     }
@@ -412,71 +420,76 @@ export const WorkspaceScreen = () => {
   const runAI = async (userCode, language) => {
     try {
       setShowLoader(true);
-      const response = await fetch("http://localhost:4000/api/ai/fix-code", {
+      const response = await fetch(`${API_URL}/ai/fix-code`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: userCode, language }),
       });
       const data = await response.json();
       setShowLoader(false);
-  
+
       if (data.suggestions) {
         // Parse the AI response to separate code from feedback
-        const { code: extractedCode, feedback } = parseAIResponse(data.suggestions);
-        
+        const { code: extractedCode, feedback } = parseAIResponse(
+          data.suggestions
+        );
+
         // Update the AI suggestions tab with verbal feedback only
         setAiSuggestions(feedback);
-        
+
         // If code was found in the response, animate and update the editor
         if (extractedCode && editorInstance) {
           // Save the original code first if we haven't already
           if (!originalCode) {
             setOriginalCode(userCode);
           }
-          
+
           // Store the AI code for later toggling
           setAiCode(extractedCode);
-          
+
           // Set animation state to true
           setIsAnimating(true);
-          
+
           try {
             // Show notification
             const notification = document.createElement("div");
             notification.className = "save-notification ai-update";
             notification.textContent = "Applying AI suggestions...";
             document.body.appendChild(notification);
-            
+
             setTimeout(() => {
               notification.classList.add("fade-out");
               setTimeout(() => document.body.removeChild(notification), 500);
             }, 1000);
-            
-            // Set the state 
+
+            // Set the state
             setIsViewingOriginalCode(false);
-            
+
             // Wait a brief moment for the UI to update
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
             // Begin the animation
             await animateCodeTypingEnhanced(editorInstance, extractedCode);
-            
+
             // After animation completes, update the state
             setCode(extractedCode);
-            
+
             // Show a notification that animation is complete
             const completionNotification = document.createElement("div");
             completionNotification.className = "save-notification ai-update";
             completionNotification.textContent = "AI code applied";
             document.body.appendChild(completionNotification);
-            
+
             setTimeout(() => {
               completionNotification.classList.add("fade-out");
-              setTimeout(() => document.body.removeChild(completionNotification), 500);
+              setTimeout(
+                () => document.body.removeChild(completionNotification),
+                500
+              );
             }, 2000);
           } catch (error) {
             console.error("Animation error:", error);
-            
+
             // If animation fails, just update the code directly
             setCode(extractedCode);
           } finally {
@@ -489,13 +502,13 @@ export const WorkspaceScreen = () => {
           notification.className = "save-notification";
           notification.textContent = "AI provided feedback but no code changes";
           document.body.appendChild(notification);
-          
+
           setTimeout(() => {
             notification.classList.add("fade-out");
             setTimeout(() => document.body.removeChild(notification), 500);
           }, 2000);
         }
-        
+
         // Show the AI Suggestions tab for feedback
         setActiveTab("ai");
       } else {
@@ -512,18 +525,18 @@ export const WorkspaceScreen = () => {
 
   // For logo click: navigate to home
   const goHome = () => {
-    navigate("/"); 
+    navigate("/");
   };
-  
+
   useEffect(() => {
     const handleResize = debounce(() => {
       setIsMobile(window.innerWidth <= 768);
     }, 100); // 100ms debounce
-    
-    window.addEventListener('resize', handleResize);
-    
+
+    window.addEventListener("resize", handleResize);
+
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
@@ -532,23 +545,25 @@ export const WorkspaceScreen = () => {
       {/* HEADER / NAVBAR */}
       <header className="main-header">
         <div className="logo-area" onClick={goHome}>
-          <img src="/BFlogo.png" className="logo" alt="logo" />
           <span className="logo-text">BUGGFIX</span>
         </div>
 
         {/* Hamburger icon (shown on small screens) */}
-        <div
-          className="burger"
-          onClick={() => setIsNavOpen((prev) => !prev)}
-        >
+        <div className="burger" onClick={() => setIsNavOpen((prev) => !prev)}>
           <span className="material-icons">menu</span>
         </div>
 
         {/* Nav Links */}
         <nav className={isNavOpen ? "nav-links open" : "nav-links"}>
-          <a href="#dashboard" onClick={() => setIsNavOpen(false)}>Dashboard</a>
-          <a href="#projects" onClick={() => setIsNavOpen(false)}>Projects</a>
-          <a href="#settings" onClick={() => setIsNavOpen(false)}>Settings</a>
+          <a href="#dashboard" onClick={() => setIsNavOpen(false)}>
+            Dashboard
+          </a>
+          <a href="#projects" onClick={() => setIsNavOpen(false)}>
+            Projects
+          </a>
+          <a href="#settings" onClick={() => setIsNavOpen(false)}>
+            Settings
+          </a>
         </nav>
       </header>
 
@@ -633,9 +648,9 @@ export const WorkspaceScreen = () => {
                     <b>Export</b>
                   </button>
                 </div>
-                <textarea 
-                  readOnly 
-                  value={output} 
+                <textarea
+                  readOnly
+                  value={output}
                   placeholder="Output will appear here after running your code..."
                 />
               </div>
@@ -645,7 +660,6 @@ export const WorkspaceScreen = () => {
               <div className="ai-suggestions-container">
                 <div className="output-header">
                   <b>AI Suggestions:</b>
-                  
                 </div>
                 <textarea
                   readOnly
@@ -663,7 +677,7 @@ export const WorkspaceScreen = () => {
           <div className="loader"></div>
         </div>
       )}
-      
+
       {/* Animation in progress indicator */}
       {isAnimating && (
         <div className="animation-in-progress">

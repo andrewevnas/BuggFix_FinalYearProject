@@ -5,10 +5,10 @@ const languageCodeMap = {
   java: 91,
 };
 
+// const API_URL = process.env.RAPIDAPI_KEY || '/api';
 
 
-
-async function getSubmission(tokenId, callback) {
+export async function getSubmission(tokenId, callback) {
   const url = `https://judge0-ce.p.rapidapi.com/submissions/${tokenId}?base64_encoded=true&fields=*`;
   const options = {
     method: 'GET',
